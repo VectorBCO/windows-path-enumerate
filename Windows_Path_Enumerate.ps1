@@ -1,4 +1,4 @@
-cls
+Clear-Host
 
 Function Write-FileLog {
        
@@ -22,8 +22,7 @@ Function Write-FileLog {
     .PARAMETER AddAtBegin 
     Parameter will be helpful if you need to add something at the beginning of every string, 
     for example: date and time, or some trigers. 
-        Ex.: "String1`r`nString2" | Write-FileLog -AddAtBegin "$(get-date -UFormat '%d.%m.%Y %H:%m:%S')   : " ` 
-            -OutOnScreen -Logname C:\temp\text.log 
+        Ex.: "String1`r`nString2" | Write-FileLog -AddAtBegin "$(get-date -UFormat '%d.%m.%Y %H:%m:%S')   : " -OutOnScreen -Logname C:\temp\text.log 
         Out: 29.01.2017 12:01:26   : String1 
              29.01.2017 12:01:26   : String2 
  
@@ -189,6 +188,8 @@ Function Write-FileLog {
 Function Fix-ServicePath  
 {
     Param (
+        [Switch]$FixServices=$true,
+        [Switch]$FixUnninstall,
         [Switch]$FixEnv
     ) 
 
@@ -244,7 +245,7 @@ Function Fix-ServicePath
 
     .NOTES 
         Name:  Fix-ServicePath
-        Version: 3.2 
+        Version: 3.3
         Author: Vector BCO 
         DateCreated: 19 Feb 2017 
 
@@ -257,69 +258,78 @@ Function Fix-ServicePath
     "$(get-date -format u)  :  INFO  :  Computername: $($Env:COMPUTERNAME)" 
 
     # Get all services
-    Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Services\" | foreach {
-        $OriginalPath = (Get-ItemProperty "$($($_).name.replace('HKEY_LOCAL_MACHINE', 'HKLM:'))")
-        if ($FixEnv){
-            if ($($OriginalPath.ImagePath) -match '%(?''envVar''[^%]+)%'){
-                $EnvVar = $Matches['envVar']
-                $FullVar = (Get-Childitem env: | Where Name -eq $EnvVar).value
-                $ImagePath = $OriginalPath.ImagePath -replace "%$EnvVar%",$FullVar
-                Clear-Variable Matches
+    $FixParameters = @()
+    if ($FixServices){
+        $FixParameters += @{"Path" = "HKLM:\SYSTEM\CurrentControlSet\Services\" ; "ParamName" = "ImagePath"}
+    }
+    if ($FixUnninstall){
+        $FixParameters += @{"Path" = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\" ; "ParamName" = "UninstallString"}
+    }
+    foreach ($FixParameter in $FixParameters){
+        Get-ChildItem $FixParameter.path | foreach {
+            $OriginalPath = (Get-ItemProperty "$($($_).name.replace('HKEY_LOCAL_MACHINE', 'HKLM:'))")
+            if ($FixEnv){
+                if ($($OriginalPath.$($FixParameter.ParamName)) -match '%(?''envVar''[^%]+)%'){
+                    $EnvVar = $Matches['envVar']
+                    $FullVar = (Get-Childitem env: | Where {$_.Name -eq $EnvVar}).value
+                    $ImagePath = $OriginalPath.$($FixParameter.ParamName) -replace "%$EnvVar%",$FullVar
+                    Clear-Variable Matches
+                }
+                Else {
+                    $ImagePath = $OriginalPath.$($FixParameter.ParamName)
+                }
             }
-            Else {
-                $ImagePath = $OriginalPath.ImagePath
+            else{
+                $ImagePath = $OriginalPath.$($FixParameter.ParamName)
             }
-        }
-        else{
-            $ImagePath = $OriginalPath.ImagePath
-        }
 
 
-        # Get all services with vulnerability
-        If (($ImagePath -like "* *") -and ($ImagePath -notlike '"*"*') -and ($ImagePath -like '*.exe*')){ 
-            
-            $NewPath = ($ImagePath -split ".exe ")[0]
-            $key = ($ImagePath -split ".exe ")[1]
-            $triger = ($ImagePath -split ".exe ")[2]
-            
-            # Get service with vulnerability with key in ImagePath
-            If (-not ($triger | Measure-Object).count -ge 1){
+            # Get all services with vulnerability
+            If (($ImagePath -like "* *") -and ($ImagePath -notlike '"*"*') -and ($ImagePath -like '*.exe*')){ 
                 
-
-                If (($NewPath -like "* *") -and ($NewPath -notlike "*.exe")){
-                    $NewValue = "`"$NewPath.exe`" $key"
-                } # End If
-
-                # Get service with vulnerability with out key in ImagePath
-                ElseIf (($NewPath -like "* *") -and ($NewPath -like "*.exe")){    
-                    $NewValue = "`"$NewPath`""
-                } # End ElseIf
+                $NewPath = ($ImagePath -split ".exe ")[0]
+                $key = ($ImagePath -split ".exe ")[1]
+                $triger = ($ImagePath -split ".exe ")[2]
                 
-                if ((-not ([string]::IsNullOrEmpty($NewValue))) -and ($NewPath -like "* *")) {
-                    try {
-                        "$(get-date -format u)  :  Old Value :  Service: '$($OriginalPath.PSChildName)' - $($OriginalPath.ImagePath)" 
-                        "$(get-date -format u)  :  Expected  :  Service: '$($OriginalPath.PSChildName)' - $NewValue" 
-                        Set-ItemProperty -Path $OriginalPath.PSPath -Name "ImagePath" -Value $NewValue -ErrorAction Stop
-                        If ((Get-ItemProperty -Path $OriginalPath.PSPath).imagepath -eq $NewValue){
-                            "$(get-date -format u)  :  SUCCESS  : New Value of ImagePath was changed for service '$($OriginalPath.PSChildName)'" 
-                        } # End If
-                        Else {
+                # Get service with vulnerability with key in ImagePath
+                If (-not ($triger | Measure-Object).count -ge 1){
+                    
+
+                    If (($NewPath -like "* *") -and ($NewPath -notlike "*.exe")){
+                        $NewValue = "`"$NewPath.exe`" $key"
+                    } # End If
+
+                    # Get service with vulnerability with out key in ImagePath
+                    ElseIf (($NewPath -like "* *") -and ($NewPath -like "*.exe")){    
+                        $NewValue = "`"$NewPath`""
+                    } # End ElseIf
+                    
+                    if ((-not ([string]::IsNullOrEmpty($NewValue))) -and ($NewPath -like "* *")) {
+                        try {
+                            "$(get-date -format u)  :  Old Value :  Service: '$($OriginalPath.PSChildName)' - $($OriginalPath.ImagePath)" 
+                            "$(get-date -format u)  :  Expected  :  Service: '$($OriginalPath.PSChildName)' - $NewValue" 
+                            Set-ItemProperty -Path $OriginalPath.PSPath -Name $($FixParameter.ParamName) -Value $NewValue -ErrorAction Stop
+                            If ((Get-ItemProperty -Path $OriginalPath.PSPath).imagepath -eq $NewValue){
+                                "$(get-date -format u)  :  SUCCESS  : New Value of ImagePath was changed for service '$($OriginalPath.PSChildName)'" 
+                            } # End If
+                            Else {
+                                "$(get-date -format u)  :  ERROR  : Something is going wrong. Value changing failed in service '$($OriginalPath.PSChildName)'."
+                            } # End Else 
+                        } # End try
+                        Catch {
                             "$(get-date -format u)  :  ERROR  : Something is going wrong. Value changing failed in service '$($OriginalPath.PSChildName)'."
-                        } # End Else 
-                    } # End try
-                    Catch {
-                        "$(get-date -format u)  :  ERROR  : Something is going wrong. Value changing failed in service '$($OriginalPath.PSChildName)'."
-                        "$(get-date -format u)  :  ERROR  :  $($Error[0].Exception.Message)"
-                    } # End Catch
-                    Clear-Variable NewValue
-                } # End If
-            } # End Main If
-        }
-        
-        If (($triger | Measure-Object).count -ge 1) { 
-            "$(get-date -format u)  :  ERROR  :  Can't parse  $($OriginalPath.ImagePath) in registry  $($OriginalPath.PSPath -replace 'Microsoft\.PowerShell\.Core\\Registry\:\:') " 
-        }
-    } # End Foreach
+                            "$(get-date -format u)  :  ERROR  :  $($Error[0].Exception.Message)"
+                        } # End Catch
+                        Clear-Variable NewValue
+                    } # End If
+                } # End Main If
+            }
+            
+            If (($triger | Measure-Object).count -ge 1) { 
+                "$(get-date -format u)  :  ERROR  :  Can't parse  $($OriginalPath.$($FixParameter.ParamName)) in registry  $($OriginalPath.PSPath -replace 'Microsoft\.PowerShell\.Core\\Registry\:\:') " 
+            }
+        } # End Foreach
+    }
 }
 
 
@@ -327,7 +337,7 @@ Function Fix-ServicePath
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Script Started Here 
-$Logname = "C:\Temp\ServicesFix-3.2.Log"
+$Logname = "C:\Temp\ServicesFix-3.3.Log"
 '*********************************************************************' | Write-FileLog -Logname $Logname
 
 
