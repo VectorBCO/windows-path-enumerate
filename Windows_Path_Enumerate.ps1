@@ -270,7 +270,7 @@ Function Fix-ServicePath
         Name:  Fix-ServicePath
         Version: 3.3
         Author: Vector BCO 
-        DateCreated: 19 Feb 2017 
+        DateCreated: 06 Jul 2018 
 
 	.LINK
 		https://gallery.technet.microsoft.com/scriptcenter/Windows-Unquoted-Service-190f0341
