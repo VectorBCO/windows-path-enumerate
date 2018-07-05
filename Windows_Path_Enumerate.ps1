@@ -198,7 +198,7 @@ Function Fix-ServicePath
         This switch parameter allow proceed Serives with vulnarability. By default this parameter enabled.
         For disable this parameter use -FixServices:$False
 
-    .PARAMETER FixUnninstall
+    .PARAMETER FixUninstall
         Parameter allow find and fix vulnarability in UninstallPath. 
         Will be covered pathes for x86 and x64 applications on x64 systems. 
     	    	
@@ -251,7 +251,7 @@ Function Fix-ServicePath
         Env variable %Programfiles% replaced to full path 'C:\Program Files' in service 'BadDriver'
 
     .EXAMPLE
-        Fix-Servicepath -FixUnninstall -FixServices:$False -WhatIf
+        Fix-Servicepath -FixUninstall -FixServices:$False -WhatIf
         
     
     VERBOSE: 
@@ -280,7 +280,7 @@ Function Fix-ServicePath
     
     Param (
         [Switch]$FixServices=$true,
-        [Switch]$FixUnninstall,
+        [Switch]$FixUninstall,
         [Switch]$FixEnv,
         [Switch]$WhatIf
     ) 
@@ -292,7 +292,7 @@ Function Fix-ServicePath
     if ($FixServices){
         $FixParameters += @{"Path" = "HKLM:\SYSTEM\CurrentControlSet\Services\" ; "ParamName" = "ImagePath"}
     }
-    if ($FixUnninstall){
+    if ($FixUninstall){
         $FixParameters += @{"Path" = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\" ; "ParamName" = "UninstallString"}
         # If OS x64 - adding pathes for x86 programs 
         If (Test-Path "$($env:SystemDrive)\Program Files (x86)\"){
@@ -390,4 +390,4 @@ If You need to modify environment variables in service path you shold to use -Fi
 EX.: Fix-ServicePath -FixEnv
 If ImagePath contain for example '%Programfile%' it will be replaced to 'C:\Program Files'
 #>
-Fix-ServicePath -FixUnninstall -FixServices -WhatIf | Write-FileLog -Logname $Logname -OutOnScreen
+Fix-ServicePath -FixUninstall -FixServices -WhatIf | Write-FileLog -Logname $Logname -OutOnScreen
