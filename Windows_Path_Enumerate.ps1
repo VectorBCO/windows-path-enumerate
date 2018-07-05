@@ -187,22 +187,29 @@ Function Write-FileLog {
 
 Function Fix-ServicePath  
 {
-    Param (
-        [Switch]$FixServices=$true,
-        [Switch]$FixUnninstall,
-        [Switch]$FixEnv
-    ) 
-
     <#
 	.SYNOPSIS
 	    Microsoft Windows Unquoted Service Path Enumeration
 
 	.DESCRIPTION
 	    Use Fix-ServicePath to fix vulnerability "Unquoted Service Path Enumeration".
-	    	
+
+    .PARAMETER FixServices
+        This switch parameter allow proceed Serives with vulnarability. By default this parameter enabled.
+        For disable this parameter use -FixServices:$False
+
+    .PARAMETER FixUnninstall
+        Parameter allow find and fix vulnarability in UninstallPath. 
+        Will be covered pathes for x86 and x64 applications on x64 systems. 
+    	    	
     .PARAMETER FixEnv 
         Find services with Environment variables in the ImagePath parameter, and replace Env. variable to the it value
         EX. %ProgramFiles%\service.exe will be replace to "C:\Program Files\service.exe"
+
+    .PARAMETER WhatIf
+        Parameter should be used for checking possible system impact. 
+        With this parameter script would not be changing anything on your system, 
+        and only will show information about posible changes  
 
 	.EXAMPLE
 		    Fix-Servicepath
@@ -243,6 +250,22 @@ Function Fix-ServicePath
         Fix 2 seervices 'BadDriver', 'NotAVirus'. 
         Env variable %Programfiles% replaced to full path 'C:\Program Files' in service 'BadDriver'
 
+    .EXAMPLE
+        Fix-Servicepath -FixUnninstall -FixServices:$False -WhatIf
+        
+    
+    VERBOSE: 
+    -------- 
+        2018-07-02 22:23:02Z  :  INFO  :  Computername: test
+        2018-07-02 22:23:04Z  :  Old Value : Software : 'FakeSoft32' - c:\Program files (x86)\Fake inc\Pseudo Software\uninstall.exe -silent
+        2018-07-02 22:23:04Z  :  Expected  : Software : 'FakeSoft32' - "c:\Program files (x86)\Fake inc\Pseudo Software\uninstall.exe" -silent
+
+ 
+    Description 
+    ----------- 
+        Script will find and displayed 
+
+
     .NOTES 
         Name:  Fix-ServicePath
         Version: 3.3
@@ -253,7 +276,14 @@ Function Fix-ServicePath
 		https://gallery.technet.microsoft.com/scriptcenter/Windows-Unquoted-Service-190f0341
 		https://www.tenable.com/sc-report-templates/microsoft-windows-unquoted-service-path-enumeration
 		http://www.commonexploits.com/unquoted-service-paths/
-	#>
+    #>
+    
+    Param (
+        [Switch]$FixServices=$true,
+        [Switch]$FixUnninstall,
+        [Switch]$FixEnv,
+        [Switch]$WhatIf
+    ) 
 
     "$(get-date -format u)  :  INFO  :  Computername: $($Env:COMPUTERNAME)" 
 
@@ -263,66 +293,80 @@ Function Fix-ServicePath
         $FixParameters += @{"Path" = "HKLM:\SYSTEM\CurrentControlSet\Services\" ; "ParamName" = "ImagePath"}
     }
     if ($FixUnninstall){
-        $FixParameters += @{"Path" = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\" ; "ParamName" = "UninstallString"}
+        $FixParameters += @{"Path" = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\" ; "ParamName" = "UninstallString"}
+        # If OS x64 - adding pathes for x86 programs 
+        If (Test-Path "$($env:SystemDrive)\Program Files (x86)\"){
+            $FixParameters += @{"Path" = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\" ; "ParamName" = "UninstallString"}
+        }
     }
     foreach ($FixParameter in $FixParameters){
         Get-ChildItem $FixParameter.path | foreach {
             $OriginalPath = (Get-ItemProperty "$($($_).name.replace('HKEY_LOCAL_MACHINE', 'HKLM:'))")
+            $ImagePath = $OriginalPath.$($FixParameter.ParamName)
             if ($FixEnv){
                 if ($($OriginalPath.$($FixParameter.ParamName)) -match '%(?''envVar''[^%]+)%'){
                     $EnvVar = $Matches['envVar']
                     $FullVar = (Get-Childitem env: | Where {$_.Name -eq $EnvVar}).value
                     $ImagePath = $OriginalPath.$($FixParameter.ParamName) -replace "%$EnvVar%",$FullVar
                     Clear-Variable Matches
-                }
-                Else {
-                    $ImagePath = $OriginalPath.$($FixParameter.ParamName)
-                }
-            }
-            else{
-                $ImagePath = $OriginalPath.$($FixParameter.ParamName)
-            }
-
-
+                } # 
+            } # End If $fixEnv
+            #Write-Host "Original path $ImagePath" -ForegroundColor Yellow
             # Get all services with vulnerability
             If (($ImagePath -like "* *") -and ($ImagePath -notlike '"*"*') -and ($ImagePath -like '*.exe*')){ 
-                
-                $NewPath = ($ImagePath -split ".exe ")[0]
-                $key = ($ImagePath -split ".exe ")[1]
-                $triger = ($ImagePath -split ".exe ")[2]
-                
-                # Get service with vulnerability with key in ImagePath
-                If (-not ($triger | Measure-Object).count -ge 1){
-                    
+                # Skip MsiExec.exe in uninstall strings
+                if ((($FixParameter.ParamName -eq 'UninstallString') -and ($ImagePath -NotMatch 'MsiExec(\.exe)?')) -or ($FixParameter.ParamName -eq 'ImagePath')){
 
-                    If (($NewPath -like "* *") -and ($NewPath -notlike "*.exe")){
-                        $NewValue = "`"$NewPath.exe`" $key"
-                    } # End If
-
-                    # Get service with vulnerability with out key in ImagePath
-                    ElseIf (($NewPath -like "* *") -and ($NewPath -like "*.exe")){    
-                        $NewValue = "`"$NewPath`""
-                    } # End ElseIf
+                    $NewPath = ($ImagePath -split ".exe ")[0]
+                    $key = ($ImagePath -split ".exe ")[1]
+                    $triger = ($ImagePath -split ".exe ")[2]
+                    $NewValue = ''
+                    # Get service with vulnerability with key in ImagePath
+                    If (-not ($triger | Measure-Object).count -ge 1){
+                        
+                        If (($NewPath -like "* *") -and ($NewPath -notlike "*.exe")){
+                            $NewValue = "`"$NewPath.exe`" $key"
+                        } # End If
+                        # Get service with vulnerability with out key in ImagePath
+                        ElseIf (($NewPath -like "* *") -and ($NewPath -like "*.exe")){    
+                            $NewValue = "`"$NewPath`""
+                        } # End ElseIf
                     
-                    if ((-not ([string]::IsNullOrEmpty($NewValue))) -and ($NewPath -like "* *")) {
-                        try {
-                            "$(get-date -format u)  :  Old Value :  Service: '$($OriginalPath.PSChildName)' - $($OriginalPath.ImagePath)" 
-                            "$(get-date -format u)  :  Expected  :  Service: '$($OriginalPath.PSChildName)' - $NewValue" 
-                            Set-ItemProperty -Path $OriginalPath.PSPath -Name $($FixParameter.ParamName) -Value $NewValue -ErrorAction Stop
-                            If ((Get-ItemProperty -Path $OriginalPath.PSPath).imagepath -eq $NewValue){
-                                "$(get-date -format u)  :  SUCCESS  : New Value of ImagePath was changed for service '$($OriginalPath.PSChildName)'" 
-                            } # End If
-                            Else {
+                        #Write-Host "New path $NewValue" -ForegroundColor green
+                        
+                        #<#
+                        if ((-not ([string]::IsNullOrEmpty($NewValue))) -and ($NewPath -like "* *")) {
+                            try {
+                                $soft_service = $(if($FixParameter.ParamName -Eq 'ImagePath'){'Service'}Else{'Software'})
+
+                                "$(get-date -format u)  :  Old Value : $soft_service : '$($OriginalPath.PSChildName)' - $($OriginalPath.$($FixParameter.ParamName))" 
+                                "$(get-date -format u)  :  Expected  : $soft_service : '$($OriginalPath.PSChildName)' - $NewValue" 
+                                If (! $WhatIf){
+                                    
+                                    Set-ItemProperty -Path $OriginalPath.PSPath -Name $($FixParameter.ParamName) -Value $NewValue -ErrorAction Stop
+                                    
+                                    $DisplayName = ''
+                                    $keyTmp = (Get-ItemProperty -Path $OriginalPath.PSPath)
+                                    if ($soft_service -match 'Software'){
+                                        $DisplayName =  $keyTmp.DisplayName
+                                    }
+                                    If ($keyTmp.$($FixParameter.ParamName) -eq $NewValue){
+                                        "$(get-date -format u)  :  SUCCESS  : Path value was changed for $soft_service '$(if($DisplayName){$DisplayName}else{$OriginalPath.PSChildName})'" 
+                                    } # End If
+                                    Else {
+                                        "$(get-date -format u)  :  ERROR  : Something is going wrong. Path was not changed for $soft_service '$(if($DisplayName){$DisplayName}else{$OriginalPath.PSChildName})'."
+                                    } # End Else 
+                                }
+                            } # End try
+                            Catch {
                                 "$(get-date -format u)  :  ERROR  : Something is going wrong. Value changing failed in service '$($OriginalPath.PSChildName)'."
-                            } # End Else 
-                        } # End try
-                        Catch {
-                            "$(get-date -format u)  :  ERROR  : Something is going wrong. Value changing failed in service '$($OriginalPath.PSChildName)'."
-                            "$(get-date -format u)  :  ERROR  :  $($Error[0].Exception.Message)"
-                        } # End Catch
-                        Clear-Variable NewValue
-                    } # End If
-                } # End Main If
+                                "$(get-date -format u)  :  ERROR  :  $($Error[0].Exception.Message)"
+                            } # End Catch
+                            Clear-Variable NewValue
+                        } # End If
+                        #>
+                    } # End Main If
+                } #End if (Skip not needed strings) 
             }
             
             If (($triger | Measure-Object).count -ge 1) { 
@@ -346,4 +390,4 @@ If You need to modify environment variables in service path you shold to use -Fi
 EX.: Fix-ServicePath -FixEnv
 If ImagePath contain for example '%Programfile%' it will be replaced to 'C:\Program Files'
 #>
-Fix-ServicePath | Write-FileLog -Logname $Logname -OutOnScreen
+Fix-ServicePath -FixUnninstall -FixServices -WhatIf | Write-FileLog -Logname $Logname -OutOnScreen
