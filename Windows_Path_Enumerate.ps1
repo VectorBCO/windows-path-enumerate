@@ -502,7 +502,8 @@ if ((! $FixServices) -and (! $FixUninstall)){
     Throw "Should be selected at least one of two parameters: FixServices or FixUninstall. `r`n For more details use 'get-help Windows_Path_Enumerate.ps1 -full'"
 }
 if ($Help){
-    Write-Output "For help use this command '& Get-Help $($MyInvocation.MyCommand.Path) -full'"
+    Write-Output "For help use this command in powershell: Get-Help $($MyInvocation.MyCommand.Path) -full"
+    powershell -command "& Get-Help $($MyInvocation.MyCommand.Path) -full"
     exit
 }
 
