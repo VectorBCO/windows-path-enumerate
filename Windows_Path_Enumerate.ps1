@@ -263,16 +263,16 @@ Function Write-FileLog {
         [switch]$OutOnScreen,
         [String]$OutRegexpMask
     ) # End Param block
-    begin {}
-    process {
+    Begin {}
+    Process {
         $Value -split '\n' | ForEach-Object {
 
             If ($SkipNullString -and (-not (([string]::IsNullOrEmpty($($_))) -or ([string]::IsNullOrWhiteSpace($($_)))))){
-                if ([String]::IsNullOrEmpty($OutRegexpMask)){
+                If ([String]::IsNullOrEmpty($OutRegexpMask)){
                     If ($OutOnScreen){"$AddAtBegin$($_ -replace '\r')$AddToEnd"}
                     "$AddAtBegin$($_ -replace '\r')$AddToEnd" | out-file $Logname -Append
                 } # End If
-                elseif (![String]::IsNullOrEmpty($OutRegexpMask)){
+                ElseIf (![String]::IsNullOrEmpty($OutRegexpMask)){
                     If ($($_ -replace '\r') -match $OutRegexpMask){
                         Write-Output "$AddAtBeginRegOut$($_ -replace '\r')$AddToEndRegOut"
                         "$AddAtBeginRegOut$($_ -replace '\r')$AddToEndRegOut" | out-file $Logname -Append
@@ -283,11 +283,11 @@ Function Write-FileLog {
                 } # End elseif
             } # End If
             ElseIF (-not ($SkipNullString)){
-                if ([String]::IsNullOrEmpty($OutRegexpMask)){
+                If ([String]::IsNullOrEmpty($OutRegexpMask)){
                     If ($OutOnScreen){"$AddAtBegin$($_ -replace '\r')$AddToEnd"}
                     "$AddAtBegin$($_ -replace '\r')$AddToEnd" | out-file $Logname -Append
                 } # End If
-                elseif (![String]::IsNullOrEmpty($OutRegexpMask)){
+                ElseIf (![String]::IsNullOrEmpty($OutRegexpMask)){
                     If (($($_ -replace '\r') -match $OutRegexpMask) -or ([string]::IsNullOrEmpty($($_))) -or ([string]::IsNullOrWhiteSpace($($_)))){
                         Write-Output  "$AddAtBeginRegOut$($_ -replace '\r')$AddToEndRegOut"
                         "$AddAtBeginRegOut$($_ -replace '\r')$AddToEndRegOut" | out-file $Logname -Append
@@ -299,7 +299,7 @@ Function Write-FileLog {
             } # End elseif
         } # End Foreach
     } # End process
-    end {}
+    End {}
 } # End Function
 
 
@@ -386,9 +386,9 @@ Function Fix-ServicePath
 
     .NOTES
         Name:  Fix-ServicePath
-        Version: 3.3.1
+        Version: 3.3.2
         Author: Vector BCO
-        DateCreated: 20 Jan 2018
+        Last Modified: 19 May 2019
 
     .LINK
         https://gallery.technet.microsoft.com/scriptcenter/Windows-Unquoted-Service-190f0341
@@ -407,10 +407,10 @@ Function Fix-ServicePath
 
     # Get all services
     $FixParameters = @()
-    if ($FixServices){
+    If ($FixServices){
         $FixParameters += @{"Path" = "HKLM:\SYSTEM\CurrentControlSet\Services\" ; "ParamName" = "ImagePath"}
     }
-    if ($FixUninstall){
+    If ($FixUninstall){
         $FixParameters += @{"Path" = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\" ; "ParamName" = "UninstallString"}
         # If OS x64 - adding pathes for x86 programs
         If (Test-Path "$($env:SystemDrive)\Program Files (x86)\"){
@@ -419,10 +419,12 @@ Function Fix-ServicePath
     }
     ForEach ($FixParameter in $FixParameters){
         Get-ChildItem $FixParameter.path -ErrorAction SilentlyContinue | ForEach-Object {
-            $OriginalPath = (Get-ItemProperty "$($($_).name.replace('HKEY_LOCAL_MACHINE', 'HKLM:'))")
+            $SpCharREGEX = '([\[\]])'
+            $RegistryPath =$_.name -Replace 'HKEY_LOCAL_MACHINE', 'HKLM:' -replace $SpCharREGEX,'`$1'
+            $OriginalPath = (Get-ItemProperty "$RegistryPath")
             $ImagePath = $OriginalPath.$($FixParameter.ParamName)
-            if ($FixEnv){
-                if ($($OriginalPath.$($FixParameter.ParamName)) -match '%(?''envVar''[^%]+)%'){
+            If ($FixEnv){
+                If ($($OriginalPath.$($FixParameter.ParamName)) -match '%(?''envVar''[^%]+)%'){
                     $EnvVar = $Matches['envVar']
                     $FullVar = (Get-Childitem env: | Where-Object {$_.Name -eq $EnvVar}).value
                     $ImagePath = $OriginalPath.$($FixParameter.ParamName) -replace "%$EnvVar%",$FullVar
@@ -432,8 +434,7 @@ Function Fix-ServicePath
             # Get all services with vulnerability
             If (($ImagePath -like "* *") -and ($ImagePath -notlike '"*"*') -and ($ImagePath -like '*.exe*')){
                 # Skip MsiExec.exe in uninstall strings
-                if ((($FixParameter.ParamName -eq 'UninstallString') -and ($ImagePath -NotMatch 'MsiExec(\.exe)?')) -or ($FixParameter.ParamName -eq 'ImagePath')){
-
+                If ((($FixParameter.ParamName -eq 'UninstallString') -and ($ImagePath -NotMatch 'MsiExec(\.exe)?')) -or ($FixParameter.ParamName -eq 'ImagePath')){
                     $NewPath = ($ImagePath -split ".exe ")[0]
                     $key = ($ImagePath -split ".exe ")[1]
                     $triger = ($ImagePath -split ".exe ")[2]
@@ -447,17 +448,17 @@ Function Fix-ServicePath
                         ElseIf (($NewPath -like "* *") -and ($NewPath -like "*.exe")){
                             $NewValue = "`"$NewPath`""
                         } # End ElseIf
-                        if ((-not ([string]::IsNullOrEmpty($NewValue))) -and ($NewPath -like "* *")) {
+                        If ((-not ([string]::IsNullOrEmpty($NewValue))) -and ($NewPath -like "* *")) {
                             try {
                                 $soft_service = $(if($FixParameter.ParamName -Eq 'ImagePath'){'Service'}Else{'Software'})
-
                                 Write-Output "$(get-date -format u)  :  Old Value : $soft_service : '$($OriginalPath.PSChildName)' - $($OriginalPath.$($FixParameter.ParamName))"
                                 Write-Output "$(get-date -format u)  :  Expected  : $soft_service : '$($OriginalPath.PSChildName)' - $NewValue"
                                 If (! $WhatIf){
-                                    Set-ItemProperty -Path $OriginalPath.PSPath -Name $($FixParameter.ParamName) -Value $NewValue -ErrorAction Stop
+                                    $OriginalPSPathOptimized = $OriginalPath.PSPath -replace $SpCharREGEX, '`$1'
+                                    Set-ItemProperty -Path $OriginalPSPathOptimized -Name $($FixParameter.ParamName) -Value $NewValue -ErrorAction Stop
                                     $DisplayName = ''
-                                    $keyTmp = (Get-ItemProperty -Path $OriginalPath.PSPath)
-                                    if ($soft_service -match 'Software'){
+                                    $keyTmp = (Get-ItemProperty -Path $OriginalPSPathOptimized)
+                                    If ($soft_service -match 'Software'){
                                         $DisplayName =  $keyTmp.DisplayName
                                     }
                                     If ($keyTmp.$($FixParameter.ParamName) -eq $NewValue){
@@ -520,9 +521,17 @@ If (($OS -eq $true) -and ($PoSh -eq $true)){
 if (! [string]::IsNullOrEmpty($Logname)){
     '*********************************************************************' | Write-FileLog -Logname $Logname
     $validation | Write-FileLog -Logname $Logname -OutOnScreen
-    Fix-ServicePath -FixUninstall:$FixUninstall -FixServices:$FixServices -WhatIf:$WhatIf -FixEnv:$FixEnv | Write-FileLog -Logname $Logname -OutOnScreen
+    Fix-ServicePath `
+        -FixUninstall:$FixUninstall `
+        -FixServices:$FixServices `
+        -WhatIf:$WhatIf `
+        -FixEnv:$FixEnv | Write-FileLog -Logname $Logname -OutOnScreen
 }
 Else {
     Write-Output $validation
-    Fix-ServicePath -FixUninstall:$FixUninstall -FixServices:$FixServices -WhatIf:$WhatIf -FixEnv:$FixEnv
+    Fix-ServicePath `
+        -FixUninstall:$FixUninstall `
+        -FixServices:$FixServices `
+        -WhatIf:$WhatIf `
+        -FixEnv:$FixEnv
 }
