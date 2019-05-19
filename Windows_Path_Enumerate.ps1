@@ -23,6 +23,31 @@
     With this parameter script would not change anything on your system,
     and only will show information about posible (needed) changes.
 
+.PARAMETER CreateBackup
+    When whick switch parameter enabled script will export registry tree`s
+    specified for services or uninstall strings based on operator selection.
+    Tree wuould be exported before any changes.
+
+    [Note] For restoring backup could be used RestoreBackup parameter
+    [Note] For providing full backup path could be used BackupName parameter
+
+.PARAMETER RestoreBackup
+    This parameter will allow restore previously created backup.
+    If BackupName parameter would not be provided will be used last created backup,
+    in other case script will try to find selected backup name
+
+    [Note] For creation backup could be used CreateBackup parameter
+    [Note] For providing full backup path could be used BackupName parameter
+
+.PARAMETER BackupName
+    Parameter would be proceeded only with CreateBackup or RestoreBackup
+    If parameter would be provided, then path from this parameter would be used
+    for creating or restoring registry keys.
+    In case if RestoreBackup or CreateBackup switches would be seleected without
+    providing value to BackupName parameter will be used C:\TMP\<Last Backup name>
+
+    Example: C:\tmp\RegBackup-20190212.reg
+
 .PARAMETER Help
     Will display how to get this help message
 
@@ -386,7 +411,7 @@ Function Fix-ServicePath
 
     .NOTES
         Name:  Fix-ServicePath
-        Version: 3.3.2
+        Version: 3.4
         Author: Vector BCO
         Last Modified: 19 May 2019
 
