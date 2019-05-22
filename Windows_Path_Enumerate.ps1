@@ -89,9 +89,9 @@ Description
 
 .NOTES
     Name:  Windows_Path_Enumerate.PS1
-    Version: 3.3.1
+    Version: 3.3.2
     Author: Vector BCO
-    DateCreated: 20 Jan 2019
+    Last Modified: 19 May 2019
 
 .LINK
     https://gallery.technet.microsoft.com/scriptcenter/Windows-Unquoted-Service-190f0341
