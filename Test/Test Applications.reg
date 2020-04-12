@@ -1,0 +1,21 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Test_APPWS]
+"UninstallString"="C:\\Path with spaces\\APPWS.exe"
+"DisplayName"="Test application with unquoted Uninstall String"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Test_APPWSWithParameters]
+"UninstallString"="C:\\Path with spaces\\APPSWithParameters.exe -parameter1 value1 -parameter2 value2"
+"DisplayName"="Test application with unquoted  Uninstall String with Parameters"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Test_APPEnvVar]
+"UninstallString"="%SystemDrive%\\Path with spaces\\APPEnv_var.exe"
+"DisplayName"="Test application with  Uninstall String that contain env variable"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Test_APPEnvVar]
+"UninstallString"="C:\\Path with spaces\\APPMulti.exe -uninstall c:\\Some Path\\Some file.exe"
+"DisplayName"="Test application with  Uninstall String that contain multiple .exe"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Test_AppShouldNotBeDetected]
+"UninstallString"="RunDll32 C:\\PROGRA~2\\COMMON~1\\INSTAL~1\\engine\\6\\INTEL3~1\\Ctor.dll,LaunchSetup ""C:\\Program Files (x86)\\InstallShield Installation Information\\{4337A496-6773-4624-985F-E203E1D08CC9}\\Setup.exe"""
+"DisplayName"="Test application with  Uninstall String that contain multiple .exe"
