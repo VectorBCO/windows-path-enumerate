@@ -25,8 +25,8 @@ Full description can be find [here](https://www.tenable.com/sc-report-templates/
 ##   3.3.2 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.3.2)**:
 ###     Release notes:
 1.  Added fix, for issue reported by RafalPolandB (Q/A block):
-    Previous script version skips services and processes which contains "[" and "]" brackets in the name.
-    Test [results](https://drive.google.com/open?id=1oNgw_BtyEwAwa55GcFilUJrcclh5E_Qz), where service name marked red, and value with special characters marked green.
+    * Previous script version skips services and processes which contains "[" and "]" brackets in the name.
+    * Test [results](https://drive.google.com/open?id=1oNgw_BtyEwAwa55GcFilUJrcclh5E_Qz), where service name marked red, and value with special characters marked green.
 
 ##   3.3.1 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.3.1)**:
 ###     Release notes:
@@ -41,10 +41,10 @@ Full description can be find [here](https://www.tenable.com/sc-report-templates/
 ##   3.3 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.3)**:
 ###     Release notes:
 1.   Added possibility for fix UninstallStrings.
-2.   Added 3 switch parameters for enabling\disabling\debugging:
+1.   Added 3 switch parameters for enabling\disabling\debugging:
     1. FixServices Enabled by default. Execution the same command as in v.3.2 should make similar changes. For disabling this parameter, use -FixServices:$False
-    2. FixUninstall Requested feature for fixing Uninstall strings. From now this switch turned off by default
-    3. WhatIf Working as WhatIf parameter in many other commands - retuning information, but not making changes
+    1. FixUninstall Requested feature for fixing Uninstall strings. From now this switch turned off by default
+    1. WhatIf Working as WhatIf parameter in many other commands - retuning information, but not making changes
 
 ##   3.2 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.2)**:
 ###     Release notes:
