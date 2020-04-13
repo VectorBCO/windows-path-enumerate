@@ -39,14 +39,18 @@
     [Note] For creation backup could be used CreateBackup parameter
     [Note] For providing full backup path could be used BackupName parameter
 
-.PARAMETER BackupName
+.PARAMETER BackupFolderPath
     Parameter would be proceeded only with CreateBackup or RestoreBackup
-    If parameter would be provided, then path from this parameter would be used
-    for creating or restoring registry keys.
-    In case if RestoreBackup or CreateBackup switches would be selected without
-    providing value to BackupName parameter will be used C:\TMP\<Last Backup name>
+    If CreateBackup or RestoreBackup parameter will be provided, then path from this parameter will be used.
 
-    Example: C:\tmp\RegBackup-20190212.reg
+    During backup will be created reg file with original values per each service and application that will be modified
+    During restoration all reg files in the specified format will be iterable imported to the registry
+
+    Input example: C:\Backup\
+
+    Backup file format:
+      for -FixServices switch => Service_<ServiceName>_YYYY-MM-DD_HHmmss.reg
+      for -FixUninstall switch => Software_<ApplicationName>_YYYY-MM-DD_HHmmss.reg
 
 .PARAMETER Help
     Will display how to get this help message
@@ -125,30 +129,61 @@ Description
     http://www.commonexploits.com/unquoted-service-paths/
 #>
 
+[CmdletBinding(DefaultParameterSetName = "Fixing")]
+
 Param (
-    [parameter(Mandatory=$false)]
+    [parameter(Mandatory=$false,
+        ParameterSetName = "Fixing")]
+    [parameter(Mandatory = $False,
+        ParameterSetName = "Restoring")]
     [Alias("s")]
         [Bool]$FixServices=$true,
-    [parameter(Mandatory=$false)]
+
+    [parameter(Mandatory = $false,
+        ParameterSetName = "Fixing")]
+    [parameter(Mandatory=$False,
+        ParameterSetName = "Restoring")]
     [Alias("u")]
         [Switch]$FixUninstall,
-    [parameter(Mandatory=$false)]
+
+    [parameter(Mandatory = $false,
+        ParameterSetName = "Fixing")]
     [Alias("e")]
         [Switch]$FixEnv,
-    [parameter(Mandatory=$false)]
+
+    [parameter(Mandatory = $False,
+        ParameterSetName = "Fixing")]
+    [Alias("cb","backup")]
+        [switch]$CreateBackup,
+
+    [parameter(Mandatory=$False,
+        ParameterSetName = "Restoring")]
+    [Alias("rb","restore")]
+        [switch]$RestoreBackup,
+
+    [parameter(Mandatory=$False,
+        ParameterSetName = "Fixing")]
+    [parameter(Mandatory = $False,
+        ParameterSetName = "Restoring")]
+        [string]$BackupFolderPath = "C:\Temp\PathEnumerationBackup",
+
+    [parameter(Mandatory = $False,
+        ParameterSetName = "Fixing")]
+    [parameter(Mandatory = $False,
+        ParameterSetName = "Restoring")]
+        [string]$LogName = "C:\Temp\ServicesFix-3.4.Log",
+
+    [parameter(Mandatory = $False,
+        ParameterSetName = "Fixing")]
+    [parameter(Mandatory = $False,
+        ParameterSetName = "Restoring")]
     [Alias("ShowOnly")]
         [Switch]$WhatIf,
-    [parameter(Mandatory=$False)]
-        [switch]$CreateBackup,
-    [parameter(Mandatory=$False)]
-        [switch]$RestoreBackup,
-    [parameter(Mandatory=$False)]
-        [string]$BackupName = "C:\Temp\ImagePathsAndUninstallStrings_Backup.reg",
-    [parameter(Mandatory=$false)]
+
+    [parameter(Mandatory = $true,
+        ParameterSetName = "Help")]
     [Alias("h")]
-        [switch]$Help,
-    [parameter(Mandatory=$false)]
-        [string]$LogName = "C:\Temp\ServicesFix-3.4.Log"
+        [switch]$Help
 )
 
 Function Fix-ServicePath {
@@ -247,6 +282,8 @@ Function Fix-ServicePath {
         [bool]$FixServices = $true,
         [Switch]$FixUninstall,
         [Switch]$FixEnv,
+        [Switch]$Backup,
+        [string]$BackupFolder = "C:\Temp\PathEnumeration",
         [Switch]$WhatIf
     )
 
@@ -264,8 +301,14 @@ Function Fix-ServicePath {
             $FixParameters += @{"Path" = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\" ; "ParamName" = "UninstallString"}
         }
     }
+    If ($Backup){
+        If (! (Test-Path $BackupFolder)){
+            New-Item $BackupFolder -Force -ItemType Directory | Out-Null
+        }
+    }
+
     ForEach ($FixParameter in $FixParameters) {
-        Get-ChildItem $FixParameter.path -ErrorAction SilentlyContinue | ForEach-Object {
+        Get-ChildItem $FixParameter.Path -ErrorAction SilentlyContinue | ForEach-Object {
             $SpCharREGEX = '([\[\]])'
             $RegistryPath = $_.name -Replace 'HKEY_LOCAL_MACHINE', 'HKLM:' -replace $SpCharREGEX, '`$1'
             $OriginalPath = (Get-ItemProperty "$RegistryPath")
@@ -300,6 +343,13 @@ Function Fix-ServicePath {
                                 $soft_service = $(if ($FixParameter.ParamName -Eq 'ImagePath') {'Service'}Else {'Software'})
                                 Write-Output "$(get-date -format u)  :  Old Value : $soft_service : '$($OriginalPath.PSChildName)' - $($OriginalPath.$($FixParameter.ParamName))"
                                 Write-Output "$(get-date -format u)  :  Expected  : $soft_service : '$($OriginalPath.PSChildName)' - $NewValue"
+                                If ($Backup){
+                                    $BcpFileName = "$BackupFolder\$soft_service`_$($OriginalPath.PSChildName)`_$(get-date -uFormat "%Y-%m-%d_%H%M%S").reg"
+                                    $BcpRegistryPath = $RegistryPath -replace '\:'
+                                    Write-Output "$(get-date -format u)  :  Creating registry backup : $BcpFileName"
+                                    $ExportResult = REG EXPORT $BcpRegistryPath $BcpFileName | Out-String
+                                    Write-Output "$(get-date -format u)  :  Result : $($ExportResult -split '\r\n' | Where-Object {$_ -NotMatch '^$'})"
+                                }
                                 If (! $WhatIf) {
                                     $OriginalPSPathOptimized = $OriginalPath.PSPath -replace $SpCharREGEX, '`$1'
                                     Set-ItemProperty -Path $OriginalPSPathOptimized -Name $($FixParameter.ParamName) -Value $NewValue -ErrorAction Stop
@@ -369,7 +419,8 @@ if ([string]::IsNullOrEmpty($LogName)){
     # Log will be written to the temp file if file not specified
     $DeleteLogFile = $true
     $LogName = New-TemporaryFile 
-} ElseIf (! (Test-Path $LogName)){
+} 
+If (! (Test-Path $LogName)){
     # If path does not exists it should be created
     try{
         $tmpLogPath = $LogName
@@ -382,8 +433,8 @@ if ([string]::IsNullOrEmpty($LogName)){
         if (! (Test-Path $tmpLogPath)) {
             New-Item -Path $tmpLogPath -Force -ItemType Directory | Out-Null
         }
-        $LogName = New-Item -Path "$tmpLogPath\$tmpLogName" -Force -ItemType File
-        $LogName = $LogName.FullName
+        New-Item -Path "$tmpLogPath\$tmpLogName" -Force -ItemType File | Out-Null
+        $LogName = "$tmpLogPath\$tmpLogName"
     } catch {
         Throw "Log file '$LogName' does not exists and cannot be created. Error: $_"
     }
@@ -391,11 +442,42 @@ if ([string]::IsNullOrEmpty($LogName)){
 
 '*********************************************************************' | Tee-Object -FilePath $LogName -Append
 $validation | Tee-Object -FilePath $LogName -Append
-Fix-ServicePath `
-    -FixUninstall:$FixUninstall `
-    -FixServices:$FixServices `
-    -WhatIf:$WhatIf `
-    -FixEnv:$FixEnv | Tee-Object -FilePath $LogName -Append
+if ($RestoreBackup){
+    if ($FixServices -and (! $FixUninstall)){
+        $RegexPart = "Service"
+    } elseif ($FixUninstall -and (! $FixServices)) {
+        $RegexPart = "Software"
+    } elseif ($FixUninstall -and $FixServices) {
+        $RegexPart = "(Service|Software)"
+    }
+
+    if (Test-Path $BackupFolderPath){
+        $FilesToImport = Get-ChildItem "$BackupFolderPath\" | Where-Object {$_.Name -match "$RegexPart`_.+_\d{4}-\d{1,2}-\d{1,2}_\d{3,6}\.reg$"} 
+        if ([string]::IsNullOrEmpty($FilesToImport)){
+            Write-Output "$(get-date -format u)  :  No backup files find in $BackupFolderPath" | Tee-Object -FilePath $LogName -Append
+        } else {
+            Foreach ($FileToImport in $FilesToImport) {
+                Write-Output "$(get-date -format u)  :  Importing '$($FileToImport.Name)' file to the registry" | Tee-Object -FilePath $LogName -Append
+                if ($WhatIf){
+                    Write-Output "$(get-date -format u)  :  Whatif switch selected so nothing changed..." | Tee-Object -FilePath $LogName -Append
+                } else {
+                    REGEDIT /s $($FileToImport.FullName)
+                }
+                #Write-Output "$(get-date -format u)  :  Result : $($ImportResult -split '\r\n' | Where-Object {$_ -NotMatch '^$'})" | Tee-Object -FilePath $LogName -Append 
+            }
+        }
+    } else {
+        Write-Output "$(get-date -format u)  :  Backup folder does not exists. Nothing to restore..." | Tee-Object -FilePath $LogName -Append
+    }
+} else {
+    Fix-ServicePath `
+        -FixUninstall:$FixUninstall `
+        -FixServices:$FixServices `
+        -WhatIf:$WhatIf `
+        -FixEnv:$FixEnv `
+        -Backup:$CreateBackup `
+        -BackupFolder $BackupFolderPath | Tee-Object -FilePath $LogName -Append
+}
 
 if ($DeleteLogFile){
     Remove-Item $LogName -Force -ErrorAction "SilentlyContinue"

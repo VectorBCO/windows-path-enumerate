@@ -13,7 +13,7 @@ Windows Registry Editor Version 5.00
 "DisplayName"="Test application with  Uninstall String that contain env variable"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Test_APPEnvVar]
-"UninstallString"="C:\\Path with spaces\\APPMulti.exe -uninstall c:\\Some Path\\Some file.exe"
+"UninstallString"="%SystemDrive%\\Path with spaces\\APPMulti.exe -uninstall c:\\Some Path\\Some file.exe"
 "DisplayName"="Test application with  Uninstall String that contain multiple .exe"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Test_AppShouldNotBeDetected]
