@@ -41,10 +41,10 @@ Full description can be find [here](https://www.tenable.com/sc-report-templates/
 ##   3.3 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.3)**:
 ###     Release notes:
 1.   Added possibility for fix UninstallStrings.
-1.   Added 3 switch parameters for enabling\disabling\debugging:
-    1. FixServices Enabled by default. Execution the same command as in v.3.2 should make similar changes. For disabling this parameter, use -FixServices:$False
-    1. FixUninstall Requested feature for fixing Uninstall strings. From now this switch turned off by default
-    1. WhatIf Working as WhatIf parameter in many other commands - retuning information, but not making changes
+2.   Added 3 switch parameters for enabling\disabling\debugging:
+    * FixServices Enabled by default. Execution the same command as in v.3.2 should make similar changes. For disabling this parameter, use -FixServices:$False
+    * FixUninstall Requested feature for fixing Uninstall strings. From now this switch turned off by default
+    * WhatIf Working as WhatIf parameter in many other commands - retuning information, but not making changes
 
 ##   3.2 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.2)**:
 ###     Release notes:
