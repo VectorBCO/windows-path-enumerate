@@ -1,4 +1,4 @@
-# windows-path-enumerate
+# Windows-Path-Enumerate
 This script fix vulnerability “Microsoft Windows Unquoted Service Path Enumeration” (Nessus plugin ID 63155) and similar problems with uninstall strings
 Script modify values in the next registry keys: 
 -   HKLM:\SYSTEM\CurrentControlSet\Services\ImagePath
@@ -10,51 +10,50 @@ For getting full help for latest script could be used Windows_Path_Enumerate.ps1
 # Vulnerability description
 Full description can be find [here](https://www.tenable.com/sc-report-templates/microsoft-windows-unquoted-service-path-enumeration)
 
-# EXTRA IMPORTANT: 
-| Test script before use in production |
+## EXTRA IMPORTANT: Test script before use in production
 
 # Version history:
 
 ##   3.4 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.4)**:
-        **Release notes:**
-        1 Backup restore functionality added  
-        2 Fixed defect with uninstall strings that start with "RunDll32"
-        3 Write-FileLog custom function replaced with tee-object
-        4 Fixed defect with saving logs and backups on a network drive
-        5 Minor non functional fixes
+###     Release notes:
+1.   Backup restore functionality added  
+2.   Fixed defect with uninstall strings that start with "RunDll32"
+3.   Write-FileLog custom function replaced with tee-object
+4.   Fixed defect with saving logs and backups on a network drive
+5.   Minor non functional fixes
 
 ##   3.3.2 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.3.2)**:
-        **Release notes:**
-        1 Added fix, for issue reported by RafalPolandB (Q/A block):
-        Previous script version skips services and processes which contains "[" and "]" brackets in the name.
-        Test [results](https://drive.google.com/open?id=1oNgw_BtyEwAwa55GcFilUJrcclh5E_Qz), where service name marked red, and value with special characters marked green.
+###     Release notes:
+1.  Added fix, for issue reported by RafalPolandB (Q/A block):
+    Previous script version skips services and processes which contains "[" and "]" brackets in the name.
+    Test [results](https://drive.google.com/open?id=1oNgw_BtyEwAwa55GcFilUJrcclh5E_Qz), where service name marked red, and value with special characters marked green.
 
 ##   3.3.1 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.3.1)**:
-        **Release notes:**
-        Main functions was not changed
+###     Release notes:
+    *Main functions was not changed
 
-        1 Removed pre-definition for whatif parameter
-        2 Added script readme and help parameter which will display it.
-        3 Added samples for running script from SCCM or similar systems
-        4 Added param LogName and possibility disable logging
-        5 Added powershell and os version clarification for problem solving (popular notes in QA block)
+1.   Removed pre-definition for whatif parameter
+2.   Added script readme and help parameter which will display it.
+3.   Added samples for running script from SCCM or similar systems
+4.   Added param LogName and possibility disable logging
+5.   Added powershell and os version clarification for problem solving (popular notes in QA block)
 
 ##   3.3 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.3)**:
-        **Release notes:**
-        1 Added possibility for fix UninstallStrings.
-        2 Added 3 switch parameters for enabling\disabling\debugging:
-            -FixServices Enabled by default. Execution the same command as in v.3.2 should make similar changes. For disabling this parameter, use -FixServices:$False
-            -FixUninstall Requested feature for fixing Uninstall strings. From now this switch turned off by default
-            -WhatIf Working as WhatIf parameter in many other commands - retuning information, but not making changes
+###     Release notes:
+1.   Added possibility for fix UninstallStrings.
+2.   Added 3 switch parameters for enabling\disabling\debugging:
+    1. FixServices Enabled by default. Execution the same command as in v.3.2 should make similar changes. For disabling this parameter, use -FixServices:$False
+    2. FixUninstall Requested feature for fixing Uninstall strings. From now this switch turned off by default
+    3. WhatIf Working as WhatIf parameter in many other commands - retuning information, but not making changes
 
 ##   3.2 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.2)**:
-        **Release notes:**
-        1 Code optimized. Added verification block. If operation finished successfully you got a message, otherwise you get error report on screen and in to the file log.
-        2 Added function Write-FileLog for easy output information to the log file and to console (similar to tee-object)
-        3 Added switch -FixEnv for fix environment variables. This switch replace Env. variable to their values. EX.: %ProgramFiles% -> "C:\Program Files"
+###     Release notes:
+1.   Code optimized. Added verification block. If operation finished successfully you got a message, otherwise you get error report on screen and in to the file log.
+2.   Added function Write-FileLog for easy output information to the log file and to console (similar to tee-object)
+3.   Added switch -FixEnv for fix environment variables. This switch replace Env. variable to their values. EX.: %ProgramFiles% -> "C:\Program Files"
 
 ##   3.1 Download link **[here](https://github.com/VectorBCO/windows-path-enumerate/tree/Version-3.1)**:
-        First published version (tested in production)
+    First published version (tested in production)
 
 
 
