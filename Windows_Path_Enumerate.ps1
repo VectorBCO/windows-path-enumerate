@@ -384,7 +384,7 @@ Function Fix-ServicePath {
 
 Function Get-OSandPoShArchitecture {
     # Check OS architecture
-    if ((Get-WmiObject Win32_OperatingSystem | Select-Object OSArchitecture).OSArchitecture -eq "64-bit"){
+    if ((Get-CimInstance Win32_OperatingSystem | Select-Object OSArchitecture).OSArchitecture -eq "64-bit") {
         if ([intptr]::Size -eq 8){
             Return $true, $true
         } else {
