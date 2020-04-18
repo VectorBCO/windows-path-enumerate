@@ -26,7 +26,7 @@ jobs:
     - name: Run a multi-line script
       run: |
         Set-ExecutionPolicy ByPass
-        Install-Module pester -force -Confirm:$false -Scope CurrentUser
+        Install-Module pester -force -Confirm:$false -Scope CurrentUser -SkipPublisherCheck
         Set-Location $ENV:GITHUB_WORKSPACE\Test\
         Get-ChildItem .\
         Get-Module Pester -ListAvailable
