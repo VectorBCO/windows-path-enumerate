@@ -28,6 +28,4 @@ jobs:
         Set-ExecutionPolicy ByPass
         Install-Module pester -force -Confirm:$false -Scope CurrentUser -SkipPublisherCheck
         Set-Location $ENV:GITHUB_WORKSPACE\Test\
-        Get-ChildItem .\
-        Get-Module Pester -ListAvailable
-
+        . .\Service-Path-Enumeration-TestCases.ps1
