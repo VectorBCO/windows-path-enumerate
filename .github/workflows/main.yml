@@ -26,5 +26,4 @@ jobs:
     - name: Execute tests
       run: |
         Set-ExecutionPolicy ByPass
-        . .\Service-Path-Enumeration-TestCases.ps1
-        if ($lastExitCode -ne 0){ throw Tests failed }
+        . $ENV:GITHUB_WORKSPACE\Test\Service-Path-Enumeration-TestCases.ps1
