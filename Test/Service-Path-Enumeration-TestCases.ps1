@@ -38,7 +38,7 @@ Function Get-RegexByName {
 Describe "Fix-options" {
     Import-TestRegistryKey
 
-    It "Service fix" {
+    It "Service fix without backup" {
         $LogPath = "$PSScriptRoot\ScriptOutput\Log.txt"
         $NextShouldBeSuccess = $false
 
@@ -47,6 +47,10 @@ Describe "Fix-options" {
         $LogContent = Get-Content $LogPath
         $LogContent -split '\r\n' | Foreach-Object {
             $string = $_ 
+            if ($NextShouldBeSuccess) {
+                $NextShouldBeSuccess = $false
+                $string | Should -Match "Success"
+            }
             if ($string -match 'Expected'){
                 $NextShouldBeSuccess = $true
                 if ($string -match 'Expected\s+:\s+Service\s+:\s+''(?''Name''[^'']+)''') {
@@ -55,10 +59,6 @@ Describe "Fix-options" {
                 $regex = Get-RegexByName -Name $Name
                 $string | Should -Match $Regex
             }
-            if ($NextShouldBeSuccess) {
-                $NextShouldBeSuccess = $false
-                $string | Should -Match "Success"
-            }
         }
-    } # End "Service fix should generate file log"
+    } # End "Script should fix service image paths (without creating registry backups)"
 }
