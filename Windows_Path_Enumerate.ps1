@@ -53,7 +53,7 @@
       for -FixUninstall switch => Software_<ApplicationName>_YYYY-MM-DD_HHmmss.reg
 
 .PARAMETER Help
-    Will display how to get this help message
+    Will display this help message
 
 .PARAMETER LogName
     Parameter allow to change output file location, or disable logging setting this parameter to empty string or $null.
