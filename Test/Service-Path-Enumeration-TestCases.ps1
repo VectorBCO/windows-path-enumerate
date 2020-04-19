@@ -37,28 +37,57 @@ Function Get-RegexByName {
 
 Describe "Fix-options" {
     Import-TestRegistryKey
+    $LogPath = "$PSScriptRoot\ScriptOutput\Log.txt"
 
-    It "Service fix without backup" {
-        $LogPath = "$PSScriptRoot\ScriptOutput\Log.txt"
-        $NextShouldBeSuccess = $false
-
+    It "Script execution (services w\o parameters)" {
         . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath
         Test-Path $LogPath | should -Be $true
+    }
+
+    # If script was executed successfully this block will analyze it
+    if (Test-Path $LogPath){
         $LogContent = Get-Content $LogPath
-        $LogContent -split '\r\n' | Foreach-Object {
-            $string = $_ 
-            if ($NextShouldBeSuccess) {
-                $NextShouldBeSuccess = $false
-                $string | Should -Match "Success"
-            }
-            if ($string -match 'Expected'){
-                $NextShouldBeSuccess = $true
-                if ($string -match 'Expected\s+:\s+Service\s+:\s+''(?''Name''[^'']+)''') {
-                    $Name = $Matches['Name']
-                }
+
+        # Log file contain some records
+        It "Log not empty" {
+            $LogContent | Should -NotBe $null
+        }
+        
+        $TestCases = @()
+        $LogContent -split '\r\n' | Where-Object {$_ -match 'Expected'} | Foreach-Object {
+            $string = $_
+            if ($string -match 'Expected\s+:\s+(?''Type''(Service|Software))\s+:\s+''(?''Name''[^'']+)''') {
+                $Name = $Matches['Name']
+                $Type = $Matches['Type']
                 $regex = Get-RegexByName -Name $Name
-                $string | Should -Match $Regex
+                $TestCases += @{ Name = "$Name" ; Type = "$Type" ; RegExpression = $regex ; LogContent = $LogContent}
             }
         }
-    } # End "Script should fix service image paths (without creating registry backups)"
+
+        It "Test cases exists" {
+            ($TestCases | Measure-Object).Count | Should -BeGreaterThan 0
+        }
+
+        It "Checking <Name> <Type> (without backup)" -TestCases $TestCases {
+            Param (
+                $Name,
+                $Type,
+                $RegExpression,
+                $LogContent
+            )
+            $NextShouldBeSuccess = $false
+            $LogContent -split '\r\n' | Foreach-Object {
+                $String = $_ 
+                if ($NextShouldBeSuccess) {
+                    $NextShouldBeSuccess = $false
+                    $string | Should -Match "Success.+'$Name'"
+                    break
+                } # End If (Change was successful)
+                if ($string -match "Expected\s+:\s+$Type\s+:\s+'$Name'") {
+                    $NextShouldBeSuccess = $true
+                    $String | Should -Match $RegExpression
+                } # End If (Path validation)
+            } # End Foreach
+        } # Checking logs that all services was successfully fixed
+    }
 }
