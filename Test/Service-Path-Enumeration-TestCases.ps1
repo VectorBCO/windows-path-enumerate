@@ -1,9 +1,5 @@
 $ErrorActionPreference = 'stop'
 
-Install-Module pester -force -Confirm:$false -Scope CurrentUser -SkipPublisherCheck
-Set-Location $ENV:GITHUB_WORKSPACE\Test\
-Import-Module Pester -Force
-
 Function Import-TestRegistryKey {
     Get-ChildItem $PSScriptRoot\ -File | Where-Object { $_.Name -match '\.reg$' } | Foreach-Object {
         Write-Host "Importing $($_.Name)..."
