@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'stop'
 
+Install-Module pester -force -Confirm:$false -Scope CurrentUser -SkipPublisherCheck
+Set-Location $ENV:GITHUB_WORKSPACE\Test\
 Import-Module Pester -Force
-
-
 
 Function Import-TestRegistryKey {
     Get-ChildItem $PSScriptRoot\ -File | Where-Object { $_.Name -match '\.reg$' } | Foreach-Object {
@@ -49,8 +49,8 @@ Describe "Fix-options" {
             $string = $_ 
             if ($string -match 'Expected'){
                 $NextShouldBeSuccess = $true
-                if ($string -match "Expected\s+:\s+Service:\s+'(?""Name""[^']+)'") {
-                    $Name = $Matches["Name"]
+                if ($string -match 'Expected\s+:\s+Service\s+:\s+''(?''Name''[^'']+)''') {
+                    $Name = $Matches['Name']
                 }
                 $regex = Get-RegexByName -Name $Name
                 $string | Should -Match $Regex
