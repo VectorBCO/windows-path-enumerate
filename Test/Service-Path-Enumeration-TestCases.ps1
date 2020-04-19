@@ -50,7 +50,7 @@ Describe "Fix-options" {
 
         # Log file contain some records
         It "Log not empty" {
-            $LogContent | Should -NotBe $null
+            $LogContent | Should -Not -Be $null
         }
         
         $TestCases = @()
