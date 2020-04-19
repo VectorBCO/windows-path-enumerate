@@ -18,12 +18,12 @@ Full description can be find [here](https://www.tenable.com/sc-report-templates/
 ```PowerShell
     $PSVersionTable.PSVersion
 ```
-    * Minimum Supported Powershell version 5 (Supported OS: Windows 7 and newer, Windows Server 2008 and newer)
-    * If PowerShell version less that 5 you can update in next 3 steps:
-    - [Update .NET Framework to maximum supported version](https://docs.microsoft.com/en-us/dotnet/framework/install/guide-for-developers?redirectedfrom=MSDN)
-    - Restart PC \ Server
-    - [Update Windows Management Framework to version 5.1](https://www.microsoft.com/en-us/download/details.aspx?id=54616)
-3. Download ot clone repo
+ * Minimum Supported Powershell version 5 (Supported OS: Windows 7 and newer, Windows Server 2008 and newer)
+ * If PowerShell version less that 5 you can update in next 3 steps:
+ - [Update .NET Framework to maximum supported version](https://docs.microsoft.com/en-us/dotnet/framework/install/guide-for-developers?redirectedfrom=MSDN)
+ - Restart PC \ Server
+ - [Update Windows Management Framework to version 5.1](https://www.microsoft.com/en-us/download/details.aspx?id=54616)
+3. Download or clone repo
     ![Download ZIP](/Content/download_repo.jpg)
 4. Unzip archive
 5. Script that doing the work is: Windows_Path_Enumerate.ps1
