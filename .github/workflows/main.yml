@@ -26,4 +26,4 @@ jobs:
     - name: Execute tests
       run: |
         Set-ExecutionPolicy ByPass
-        . .\Service-Path-Enumeration-TestCases.ps1
+        . $ENV:GITHUB_WORKSPACE\Test\Service-Path-Enumeration-TestCases.ps1
