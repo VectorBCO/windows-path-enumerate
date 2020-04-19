@@ -26,6 +26,5 @@ jobs:
     - name: Execute tests
       run: |
         Set-ExecutionPolicy ByPass
-        Install-Module pester -force -Confirm:$false -Scope CurrentUser -SkipPublisherCheck
-        Set-Location $ENV:GITHUB_WORKSPACE\Test\
         . .\Service-Path-Enumeration-TestCases.ps1
+        if ($lastExitCode -ne 0){ throw Tests failed }
