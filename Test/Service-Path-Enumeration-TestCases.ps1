@@ -86,7 +86,4 @@ Describe "Fix-options" {
             } # End Foreach
         } # Checking logs that all services was successfully fixed
     }
-    It "True not False" {
-        $true | Should -Be $False
-    }
 }
