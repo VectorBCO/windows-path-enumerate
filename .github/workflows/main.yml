@@ -27,4 +27,3 @@ jobs:
       run: |
         Set-ExecutionPolicy ByPass
         . .\Service-Path-Enumeration-TestCases.ps1
-        if ($lastExitCode -ne 0){ throw Tests failed }
