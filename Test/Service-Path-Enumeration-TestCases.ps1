@@ -35,6 +35,11 @@ Describe "Fix-options" {
     Import-TestRegistryKey
     $LogPath = "$PSScriptRoot\ScriptOutput\Log.txt"
 
+    It "Silent & Passthru (fix need)" {
+        $OutPut = . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath -FixUninstall -WhatIf -Passthru -Silent
+        $OutPut | should -Be $true
+    }
+
     It "Script execution (services w\o parameters)" {
         . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath
         Test-Path $LogPath | should -Be $true
@@ -48,7 +53,7 @@ Describe "Fix-options" {
         It "Log not empty" {
             $LogContent | Should -Not -Be $null
         }
-        
+
         $TestCases = @()
         $LogContent -split '\r\n' | Where-Object {$_ -match 'Expected'} | Foreach-Object {
             $string = $_
@@ -85,5 +90,10 @@ Describe "Fix-options" {
                 } # End If (Path validation)
             } # End Foreach
         } # Checking logs that all services was successfully fixed
+
+        It "Silent & Passthru (fix not needed - everything should be fixed)" {
+            $OutPut = . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath -FixUninstall -WhatIf -Passthru -Silent
+            $OutPut | should -Be $false
+        }
     }
 }

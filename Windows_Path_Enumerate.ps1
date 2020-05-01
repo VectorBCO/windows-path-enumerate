@@ -52,6 +52,23 @@
       for -FixServices switch => Service_<ServiceName>_YYYY-MM-DD_HHmmss.reg
       for -FixUninstall switch => Software_<ApplicationName>_YYYY-MM-DD_HHmmss.reg
 
+.PARAMETER Passthru
+    With this parameter will be returned object array without any messages in a console
+    Each element will continue Service\Program Name, Path, Type <Service\Software>, ParamName <ImagePath\UninstallString>, OriginalValue, ExpectedValue
+
+.PARAMETER Silent
+    [i] Silent parameter will work only together with Passthru parameter
+    If at least 1 Service Path or Uninstall String should be fixed script will return $true
+    Otherwise script will return $false
+
+    Example:
+        .\windows_path_enumerate.ps1 -FixUninstall -WhatIf -Passthru -Silent
+    Output:
+        $true
+    Description:
+        $true mean at least 1 service need to be fixed.
+        WhatIf switch mean that nothing was fixed, registry was only diagnosed for the vulnerability
+
 .PARAMETER Help
     Will display this help message
 
@@ -180,6 +197,14 @@ Param (
     [Alias("ShowOnly")]
         [Switch]$WhatIf,
 
+    [parameter(Mandatory = $False,
+        ParameterSetName = "Fixing")]
+        [Switch]$Passthru,
+
+    [parameter(Mandatory = $False,
+        ParameterSetName = "Fixing")]
+        [Switch]$Silent,
+
     [parameter(Mandatory = $true,
         ParameterSetName = "Help")]
     [Alias("h")]
@@ -284,7 +309,8 @@ Function Fix-ServicePath {
         [Switch]$FixEnv,
         [Switch]$Backup,
         [string]$BackupFolder = "C:\Temp\PathEnumeration",
-        [Switch]$WhatIf
+        [Switch]$WhatIf,
+        [Switch]$Passthru
     )
 
     Write-Output "$(get-date -format u)  :  INFO  : ComputerName: $($Env:ComputerName)"
@@ -306,7 +332,7 @@ Function Fix-ServicePath {
             New-Item $BackupFolder -Force -ItemType Directory | Out-Null
         }
     }
-
+    $PTElements = @()
     ForEach ($FixParameter in $FixParameters) {
         Get-ChildItem $FixParameter.Path -ErrorAction SilentlyContinue | ForEach-Object {
             $SpCharREGEX = '([\[\]])'
@@ -343,6 +369,15 @@ Function Fix-ServicePath {
                                 $soft_service = $(if ($FixParameter.ParamName -Eq 'ImagePath') {'Service'}Else {'Software'})
                                 Write-Output "$(get-date -format u)  :  Old Value : $soft_service : '$($OriginalPath.PSChildName)' - $($OriginalPath.$($FixParameter.ParamName))"
                                 Write-Output "$(get-date -format u)  :  Expected  : $soft_service : '$($OriginalPath.PSChildName)' - $NewValue"
+                                if ($Passthru){
+                                    $PTElements += '' | Select-Object `
+                                        @{n = 'Name'; e = {$OriginalPath.PSChildName}}, `
+                                        @{n = 'Type'; e = {$soft_service}}, `
+                                        @{n = 'ParamName'; e = {$FixParameter.ParamName}}, `
+                                        @{n = 'Path'; e = {$OriginalPSPathOptimized}}, `
+                                        @{n = 'OriginalValue'; e = {$OriginalPath.$($FixParameter.ParamName)}}, `
+                                        @{n = 'ExpectedValue'; e = {$NewValue}}
+                                }
                                 If ($Backup){
                                     $BcpFileName = "$BackupFolder\$soft_service`_$($OriginalPath.PSChildName)`_$(get-date -uFormat "%Y-%m-%d_%H%M%S").reg"
                                     $BcpRegistryPath = $RegistryPath -replace '\:'
@@ -380,6 +415,9 @@ Function Fix-ServicePath {
             } # End If
         } # End Foreach
     } # End Foreach
+    if ($Passthru){
+        return $PTElements
+    }
 }
 
 Function Get-OSandPoShArchitecture {
@@ -391,6 +429,21 @@ Function Get-OSandPoShArchitecture {
             Return $true, $false
         }
     } else { Return $false, $false }
+}
+
+Function Tee-Log {
+    param(
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+            $Input,
+        [Parameter(Mandatory = $true)]
+            $FilePath,
+        [switch]$Silent
+    )
+    if($Silent){
+        $Input | Out-File -FilePath $LogName -Append
+    } else {
+        $Input | Tee-Object -FilePath $LogName -Append
+    }
 }
 
 if ((! $FixServices) -and (! $FixUninstall)){
@@ -440,8 +493,9 @@ If (! (Test-Path $LogName)){
     }
 }
 
-'*********************************************************************' | Tee-Object -FilePath $LogName -Append
-$validation | Tee-Object -FilePath $LogName -Append
+
+'*********************************************************************' | Tee-Log -FilePath $LogName -Silent:$Passthru
+$validation | Tee-Log -FilePath $LogName -Silent:$Passthru
 if ($RestoreBackup){
     if ($FixServices -and (! $FixUninstall)){
         $RegexPart = "Service"
@@ -454,29 +508,48 @@ if ($RestoreBackup){
     if (Test-Path $BackupFolderPath){
         $FilesToImport = Get-ChildItem "$BackupFolderPath\" | Where-Object {$_.Name -match "$RegexPart`_.+_\d{4}-\d{1,2}-\d{1,2}_\d{3,6}\.reg$"} 
         if ([string]::IsNullOrEmpty($FilesToImport)){
-            Write-Output "$(get-date -format u)  :  No backup files find in $BackupFolderPath" | Tee-Object -FilePath $LogName -Append
+            Write-Output "$(get-date -format u)  :  No backup files find in $BackupFolderPath" | Tee-Log -FilePath $LogName -Silent:$Passthru
         } else {
             Foreach ($FileToImport in $FilesToImport) {
-                Write-Output "$(get-date -format u)  :  Importing '$($FileToImport.Name)' file to the registry" | Tee-Object -FilePath $LogName -Append
+                Write-Output "$(get-date -format u)  :  Importing '$($FileToImport.Name)' file to the registry" | Tee-Log -FilePath $LogName -Silent:$Passthru
                 if ($WhatIf){
-                    Write-Output "$(get-date -format u)  :  Whatif switch selected so nothing changed..." | Tee-Object -FilePath $LogName -Append
+                    Write-Output "$(get-date -format u)  :  Whatif switch selected so nothing changed..." | Tee-Log -FilePath $LogName -Silent:$Passthru
                 } else {
                     REGEDIT /s $($FileToImport.FullName)
                 }
-                #Write-Output "$(get-date -format u)  :  Result : $($ImportResult -split '\r\n' | Where-Object {$_ -NotMatch '^$'})" | Tee-Object -FilePath $LogName -Append 
+                #Write-Output "$(get-date -format u)  :  Result : $($ImportResult -split '\r\n' | Where-Object {$_ -NotMatch '^$'})" | Tee-Log -FilePath $LogName -Silent:$Passthru 
             }
         }
     } else {
-        Write-Output "$(get-date -format u)  :  Backup folder does not exists. Nothing to restore..." | Tee-Object -FilePath $LogName -Append
+        Write-Output "$(get-date -format u)  :  Backup folder does not exists. Nothing to restore..." | Tee-Log -FilePath $LogName -Silent:$Passthru
     }
 } else {
-    Fix-ServicePath `
+    $ScriptExecutionResult = Fix-ServicePath `
         -FixUninstall:$FixUninstall `
         -FixServices:$FixServices `
         -WhatIf:$WhatIf `
         -FixEnv:$FixEnv `
+        -Passthru:$Passthru `
         -Backup:$CreateBackup `
-        -BackupFolder $BackupFolderPath | Tee-Object -FilePath $LogName -Append
+        -BackupFolder $BackupFolderPath 
+
+    if ($Passthru){
+        $Objects = $ScriptExecutionResult[-1]
+        $outputCount = ($ScriptExecutionResult | Measure-Object).count
+        if ($outputCount -gt 2){
+            $ScriptExecutionResult = $ScriptExecutionResult[0..$($outputCount - 2)]
+        }
+    } 
+    $ScriptExecutionResult | Tee-Log -FilePath $LogName -Silent:$Passthru
+    If ($Passthru){
+        If ($Silent -and $(( $Objects | Measure-Object ).Count -ge 1)){
+            $True
+        } ElseIf ($Silent){
+            $False
+        } Else {
+            $Objects
+        }
+    }
 }
 
 if ($DeleteLogFile){
