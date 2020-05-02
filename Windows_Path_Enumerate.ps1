@@ -394,7 +394,7 @@ Function Fix-ServicePath {
                                         $DisplayName = $keyTmp.DisplayName
                                     }
                                     If ($keyTmp.$($FixParameter.ParamName) -eq $NewValue) {
-                                        Write-Output "$(get-date -format u)  :  SUCCESS  : Path value was changed for $soft_service '$(if($DisplayName){$DisplayName}else{$OriginalPath.PSChildName})'"
+                                        Write-Output "$(get-date -format u)  :  SUCCESS  : Path value was changed for $soft_service '$($OriginalPath.PSChildName)' $(if($DisplayName){"($DisplayName)"})"
                                     } # End If
                                     Else {
                                         Write-Output "$(get-date -format u)  :  ERROR  : Something is going wrong. Path was not changed for $soft_service '$(if($DisplayName){$DisplayName}else{$OriginalPath.PSChildName})'."
