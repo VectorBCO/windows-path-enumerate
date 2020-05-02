@@ -30,6 +30,7 @@ Function Get-RegexByName {
         "Test_APPWS"{
             Write-Host "[Software] 'Test_APPWS' with unquoted Uninstall String"
             $Regex = [regex]::escape('"C:\Path with spaces\APPWS.exe"')
+        }
         "Test_APPWSWithParameters"{
             Write-Host "[Software] 'Test_APPWSWithParameters' with unquoted Uninstall String with Parameters"
             $Regex = [regex]::escape('"C:\Path with spaces\APPSWithParameters.exe" -parameter1 value1 -parameter2 value2')
