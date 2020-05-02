@@ -22,7 +22,7 @@ try {
             "$PSScriptRoot\ScriptOutput\Silent_True_Log.txt",
             "$PSScriptRoot\ScriptOutput\Silent_False_Log.txt"
         )
-        Foreach ($LogPath in $logs{
+        Foreach ($LogPath in $logs){
             Write-Host ">>> Log file '$LogPath' content:"
             Get-Content $LogPath
         }
