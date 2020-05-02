@@ -10,14 +10,17 @@ try {
     $outputfolder = "$PSScriptRoot\PesterOutput\"
     New-Item $outputfolder -Force -ItemType Directory
     $results = Invoke-Pester -Script "$PSScriptRoot\Service-Path-Enumeration-TestCases.ps1" -OutputFormat NUnitXml `
-                            -OutputFile "$outputfolder\Services-And-Software-Verification.xml" -PassThru
+                            -OutputFile "$OutputFolder\Services-And-Software-Verification.xml" -PassThru
 } catch {
     Write-Host "Something failed during script execution. Error: $_"
 } Finally {
     if ($results.FailedCount -gt 0) {
         Write-Host "Tests failed..."
-        Write-Host "Log file content:"
-        Get-Content "$PSScriptRoot\ScriptOutput\Log.txt"
+
+        Foreach ($LogPath in @("$PSScriptRoot\ScriptOutput\Service_Log.txt", "$PSScriptRoot\ScriptOutput\Software_Log.txt")){
+            Write-Host ">>> Log file '$LogPath' content:"
+            Get-Content $LogPath
+        }
         $ECode = 2
     } elseif ($results.TotalCount -eq 0){
         Write-Host "Tests not started..."

@@ -32,26 +32,18 @@ Function Get-RegexByName {
     return $Regex
 }
 
-Describe "Fix-options" {
-    Import-TestRegistryKey
-    $LogPath = "$PSScriptRoot\ScriptOutput\Log.txt"
 
-    It "Silent & Passthru (fix need)" {
-        $OutPut = . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath -FixUninstall -WhatIf -Passthru -Silent
-        $OutPut | should -Be $true
-    }
-
-    It "Script execution (services w\o parameters)" {
-        . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath
-        Test-Path $LogPath | should -Be $true
-    }
-
+Function Verify-Logs {
+    param(
+        $LogPath,
+        $Number
+    )
     # If script was executed successfully this block will analyze it
     if (Test-Path $LogPath){
         $LogContent = Get-Content $LogPath
 
         # Log file contain some records
-        It "Log not empty" {
+        It "Log not empty #$Number" {
             $LogContent | Should -Not -Be $null
         }
 
@@ -71,11 +63,11 @@ Describe "Fix-options" {
             }
         }
 
-        It "Test cases exists" {
+        It "Test cases exists #$Number" {
             ($TestCases | Measure-Object).Count | Should -BeGreaterThan 0
         }
 
-        It "Checking <Name> <Type> (without backup)" -TestCases $TestCases {
+        It "[<Type>] <Name> (w\o backup)" -TestCases $TestCases {
             Param (
                 $Name,
                 $Type,
@@ -96,10 +88,34 @@ Describe "Fix-options" {
                 } # End If (Path validation)
             } # End Foreach
         } # Checking logs that all services was successfully fixed
+    }
+}
 
-        It "Silent & Passthru (fix not needed - everything should be fixed)" {
-            $OutPut = . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath -FixUninstall -WhatIf -Passthru -Silent
-            $OutPut | should -Be $false
-        }
+Describe "Fix-options" {
+    Import-TestRegistryKey
+    $LogPath = "$PSScriptRoot\ScriptOutput\Service_Log.txt"
+    It "Silent & Passthru (fix need)" {
+        $OutPut = . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath -FixUninstall -WhatIf -Passthru -Silent -LogName ''
+        $OutPut | should -Be $true
+    }
+
+    It "Script execution (services w\o parameters)" {
+        . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath
+        Test-Path $LogPath | should -Be $true
+    }
+
+    Verify-Logs -Number 1 -LogPath $LogPath
+
+    $LogPath = "$PSScriptRoot\ScriptOutput\Software_Log.txt"
+    It "Script execution (services w\o parameters)" {
+        . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -FixUninstall -FixServices $False -LogName $LogPath
+        Test-Path $LogPath | should -Be $true
+    }
+
+    Verify-Logs -Number 2 -LogPath $LogPath
+
+    It "Silent & Passthru (fix not needed - everything should be fixed)" {
+        $OutPut = . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath -FixUninstall -WhatIf -Passthru -Silent -LogName ''
+        $OutPut | should -Be $false
     }
 }
