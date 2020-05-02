@@ -11,6 +11,7 @@ Function Get-RegexByName {
     param ([string]$Name)
 
     switch ($Name){
+#------------------------------- Service -----------------------------
         "Test_SrvWS" {
             Write-Host "[Service] 'Test_SrvWS' with unquoted ImagePath"
             $Regex = [regex]::escape('"C:\Path with spaces\SrvWS.exe"')
@@ -27,6 +28,7 @@ Function Get-RegexByName {
             Write-Host "[Service] 'Test_SrvMultiExe' with ImagePath that contain multiple .exe"
             $Regex = [regex]::escape('"C:\Path with spaces\SrvMulti.exe" -parameter c:\Some Path\Some file.exe')
         }
+#------------------------------- Software -----------------------------
         "Test_APPWS"{
             Write-Host "[Software] 'Test_APPWS' with unquoted Uninstall String"
             $Regex = [regex]::escape('"C:\Path with spaces\APPWS.exe"')
