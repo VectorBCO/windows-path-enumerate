@@ -12,21 +12,37 @@ Function Get-RegexByName {
 
     switch ($Name){
         "Test_SrvWS" {
-            Write-Host "Test service with unquoted ImagePath"
+            Write-Host "[Service] 'Test_SrvWS' with unquoted ImagePath"
             $Regex = [regex]::escape('"C:\Path with spaces\SrvWS.exe"')
         }
         "Test_SrvWSWithParameters" {
-            Write-Host "Test service with unquoted ImagePath with Parameters"
+            Write-Host "[Service] 'Test_SrvWSWithParameters' service with unquoted ImagePath with Parameters"
             $Regex = [regex]::escape('"C:\Path with spaces\SrvWSWithParameters.exe" -parameter1 value1 -parameter2 value2')
         }
         "Test_SrvEnvVar" {
-            Write-Host "Test service with ImagePath that contain env variable"
+            Write-Host "[Service] 'Test_SrvEnvVar' with ImagePath that contain env variable"
             $Regex = [regex]::escape('"%SystemDrive%\Path with spaces\SrvEnv_var.exe"')
         }
         "Test_SrvMultiExe"{
-            Write-Host "Test service with ImagePath that contain multiple .exe"
+            Write-Host "[Service] 'Test_SrvMultiExe' with ImagePath that contain multiple .exe"
             $Regex = [regex]::escape('"C:\Path with spaces\SrvMulti.exe" -parameter c:\Some Path\Some file.exe')
         }
+        "Test_APPWS"{
+            Write-Host "[Software] 'Test_APPWS' with unquoted Uninstall String"
+            $Regex = [regex]::escape('"C:\Path with spaces\APPWS.exe"')
+        "Test_APPWSWithParameters"{
+            Write-Host "[Software] 'Test_APPWSWithParameters' with unquoted Uninstall String with Parameters"
+            $Regex = [regex]::escape('"C:\Path with spaces\APPSWithParameters.exe" -parameter1 value1 -parameter2 value2')
+        }
+        "Test_APPEnvVar"{
+            Write-Host "[Software] 'Test_APPEnvVar' with unquoted Uninstall String with Parameters"
+            $Regex = [regex]::escape('"%SystemDrive%\Path with spaces\APPEnv_var.exe"')
+        }
+        "Test_APPEnvVar_MultiExe"{
+            Write-Host "[Software] 'Test_APPEnvVar_MultiExe' with unquoted Uninstall String with Parameters"
+            $Regex = [regex]::escape('"%SystemDrive%\Path with spaces\APPMulti.exe" -uninstall c:\Some Path\Some file.exe')
+        }
+        # Test_AppShouldNotBeDetected  "Test application with  Uninstall String that contain multiple .exe"
         default {$Regex = ''}
     }
     return $Regex
@@ -95,7 +111,7 @@ Describe "Fix-options" {
     Import-TestRegistryKey
     $LogPath = "$PSScriptRoot\ScriptOutput\Service_Log.txt"
     It "Silent & Passthru (fix need)" {
-        $OutPut = . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath -FixUninstall -WhatIf -Passthru -Silent -LogName ''
+        $OutPut = . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -FixUninstall -WhatIf -Passthru -Silent -LogName ''
         $OutPut | should -Be $true
     }
 
@@ -115,7 +131,7 @@ Describe "Fix-options" {
     Verify-Logs -Number 2 -LogPath $LogPath
 
     It "Silent & Passthru (fix not needed - everything should be fixed)" {
-        $OutPut = . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath -FixUninstall -WhatIf -Passthru -Silent -LogName ''
+        $OutPut = . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -FixUninstall -WhatIf -Passthru -Silent -LogName ''
         $OutPut | should -Be $false
     }
 }
