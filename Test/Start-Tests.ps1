@@ -16,6 +16,8 @@ try {
 } Finally {
     if ($results.FailedCount -gt 0) {
         Write-Host "Tests failed..."
+        Write-Host "Log file content:"
+        Get-Content "$PSScriptRoot\ScriptOutput\Log.txt"
         $ECode = 2
     } elseif ($results.TotalCount -eq 0){
         Write-Host "Tests not started..."

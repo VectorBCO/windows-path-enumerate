@@ -27,6 +27,7 @@ Function Get-RegexByName {
             Write-Host "Test service with ImagePath that contain multiple .exe"
             $Regex = [regex]::escape('"C:\Path with spaces\SrvMulti.exe" -parameter c:\Some Path\Some file.exe')
         }
+        default {$Regex = ''}
     }
     return $Regex
 }
@@ -57,11 +58,16 @@ Describe "Fix-options" {
         $TestCases = @()
         $LogContent -split '\r\n' | Where-Object {$_ -match 'Expected'} | Foreach-Object {
             $string = $_
+            $Name = ''
+            $Type = ''
+            $regex = ''
             if ($string -match 'Expected\s+:\s+(?''Type''(Service|Software))\s+:\s+''(?''Name''[^'']+)''') {
                 $Name = $Matches['Name']
                 $Type = $Matches['Type']
                 $regex = Get-RegexByName -Name $Name
-                $TestCases += @{ Name = "$Name" ; Type = "$Type" ; RegExpression = $regex ; LogContent = $LogContent}
+                if (! [string]::IsNullOrEmpty($regex)) {
+                    $TestCases += @{ Name = "$Name" ; Type = "$Type" ; RegExpression = $regex ; LogContent = $LogContent}
+                }
             }
         }
 
