@@ -133,11 +133,23 @@ Description
     Script will find and displayed
 
 
+.EXAMPLE
+    # This command will return $true if at least 1 path should be fixed or $false if there nothing to fix
+    # Log will not be available
+    .\windows_path_enumerate.ps1 -FixUninstall -WhatIf -Passthru -Silent -LogName ''
+
+
+VERBOSE:
+--------
+    true
+
+
+
 .NOTES
     Name:  Windows_Path_Enumerate.PS1
-    Version: 3.4
+    Version: 3.5
     Author: Vector BCO
-    Updated: 11 Apr 2020
+    Updated: 3 May 2020
 
 .LINK
     https://github.com/VectorBCO/windows-path-enumerate/
@@ -290,9 +302,9 @@ Function Fix-ServicePath {
 
     .NOTES
         Name:  Fix-ServicePath
-        Version: 3.4
+        Version: 3.5
         Author: Vector BCO
-        Last Modified: 11 Apr 2020
+        Last Modified: 3 May 2020
 
     .LINK
         https://gallery.technet.microsoft.com/scriptcenter/Windows-Unquoted-Service-190f0341
