@@ -374,6 +374,7 @@ Function Fix-ServicePath {
                         If ((-not ([string]::IsNullOrEmpty($NewValue))) -and ($NewPath -like "* *")) {
                             try {
                                 $soft_service = $(if ($FixParameter.ParamName -Eq 'ImagePath') {'Service'}Else {'Software'})
+                                $OriginalPSPathOptimized = $OriginalPath.PSPath -replace $SpCharREGEX, '`$1'
                                 Write-Output "$(get-date -format u)  :  Old Value : $soft_service : '$($OriginalPath.PSChildName)' - $($OriginalPath.$($FixParameter.ParamName))"
                                 Write-Output "$(get-date -format u)  :  Expected  : $soft_service : '$($OriginalPath.PSChildName)' - $NewValue"
                                 if ($Passthru){
@@ -393,7 +394,6 @@ Function Fix-ServicePath {
                                     Write-Output "$(get-date -format u)  :  Result : $($ExportResult -split '\r\n' | Where-Object {$_ -NotMatch '^$'})"
                                 }
                                 If (! $WhatIf) {
-                                    $OriginalPSPathOptimized = $OriginalPath.PSPath -replace $SpCharREGEX, '`$1'
                                     Set-ItemProperty -Path $OriginalPSPathOptimized -Name $($FixParameter.ParamName) -Value $NewValue -ErrorAction Stop
                                     $DisplayName = ''
                                     $keyTmp = (Get-ItemProperty -Path $OriginalPSPathOptimized)
