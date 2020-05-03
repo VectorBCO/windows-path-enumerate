@@ -17,9 +17,9 @@ try {
     if ($results.FailedCount -gt 0) {
         Write-Host "Tests failed..."
         $logs = @(
+            "$PSScriptRoot\ScriptOutput\Silent_True_Log.txt",
             "$PSScriptRoot\ScriptOutput\Service_Log.txt",
             "$PSScriptRoot\ScriptOutput\Software_Log.txt",
-            "$PSScriptRoot\ScriptOutput\Silent_True_Log.txt",
             "$PSScriptRoot\ScriptOutput\Silent_False_Log.txt"
         )
         Foreach ($LogPath in $logs){

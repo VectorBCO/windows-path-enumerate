@@ -242,7 +242,6 @@ Function Fix-ServicePath {
 
     VERBOSE:
     --------
-        2017-02-19 15:43:50Z  :  INFO  :  ComputerName: W8-NB
         2017-02-19 15:43:50Z  :  Old Value :  Service: 'BadDriver' - %ProgramFiles%\bad driver\driver.exe -k -l 'oper'
         2017-02-19 15:43:50Z  :  Expected  :  Service: 'BadDriver' - "%ProgramFiles%\bad driver\driver.exe" -k -l 'oper'
         2017-02-19 15:43:50Z  :  SUCCESS  : New Value of ImagePath was changed for service 'BadDriver'
@@ -262,7 +261,6 @@ Function Fix-ServicePath {
 
     VERBOSE:
     --------
-        2017-02-19 15:43:50Z  :  INFO  :  ComputerName: W8-NB
         2017-02-19 15:43:50Z  :  Old Value :  Service: 'BadDriver' - %ProgramFiles%\bad driver\driver.exe -k -l 'oper'
         2017-02-19 15:43:50Z  :  Expected  :  Service: 'BadDriver' - "C:\Program Files\bad driver\driver.exe" -k -l 'oper'
         2017-02-19 15:43:50Z  :  SUCCESS  : New Value of ImagePath was changed for service 'BadDriver'
@@ -281,7 +279,6 @@ Function Fix-ServicePath {
 
     VERBOSE:
     --------
-        2018-07-02 22:23:02Z  :  INFO  :  ComputerName: test
         2018-07-02 22:23:04Z  :  Old Value : Software : 'FakeSoft32' - c:\Program files (x86)\Fake inc\Pseudo Software\uninstall.exe -silent
         2018-07-02 22:23:04Z  :  Expected  : Software : 'FakeSoft32' - "c:\Program files (x86)\Fake inc\Pseudo Software\uninstall.exe" -silent
 
@@ -312,8 +309,6 @@ Function Fix-ServicePath {
         [Switch]$WhatIf,
         [Switch]$Passthru
     )
-
-    Write-Output "$(get-date -format u)  :  INFO  : ComputerName: $($Env:ComputerName)"
 
     # Get all services
     $FixParameters = @()
@@ -495,7 +490,9 @@ If (! (Test-Path $LogName)){
 
 
 '*********************************************************************' | Tee-Log -FilePath $LogName -Silent:$Passthru
+"$(get-date -format u)  :  INFO  : ComputerName: $($Env:ComputerName)" | Tee-Log -FilePath $LogName -Silent:$Passthru
 $validation | Tee-Log -FilePath $LogName -Silent:$Passthru
+
 if ($RestoreBackup){
     if ($FixServices -and (! $FixUninstall)){
         $RegexPart = "Service"
@@ -533,13 +530,11 @@ if ($RestoreBackup){
         -Backup:$CreateBackup `
         -BackupFolder $BackupFolderPath 
 
-    if ($Passthru){
-        $Objects = $ScriptExecutionResult[-1]
-        $outputCount = ($ScriptExecutionResult | Measure-Object).count
-        if ($outputCount -gt 2){
-            $ScriptExecutionResult = $ScriptExecutionResult[0..$($outputCount - 2)]
-        }
-    } 
+    if ($Passthru -and (! [string]::IsNullOrEmpty($ScriptExecutionResult))){
+        $Objects = $ScriptExecutionResult | Where {$_.GetType().Name -eq 'PSCustomObject' }
+        $ScriptExecutionResult = $ScriptExecutionResult | Where {$_.GetType().Name -ne 'PSCustomObject' }
+    }
+
     $ScriptExecutionResult | Tee-Log -FilePath $LogName -Silent:$Passthru
     If ($Passthru){
         If ($Silent -and $(( $Objects | Measure-Object ).Count -ge 1)){
