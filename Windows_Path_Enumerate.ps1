@@ -52,6 +52,23 @@
       for -FixServices switch => Service_<ServiceName>_YYYY-MM-DD_HHmmss.reg
       for -FixUninstall switch => Software_<ApplicationName>_YYYY-MM-DD_HHmmss.reg
 
+.PARAMETER Passthru
+    With this parameter will be returned object array without any messages in a console
+    Each element will continue Service\Program Name, Path, Type <Service\Software>, ParamName <ImagePath\UninstallString>, OriginalValue, ExpectedValue
+
+.PARAMETER Silent
+    [i] Silent parameter will work only together with Passthru parameter
+    If at least 1 Service Path or Uninstall String should be fixed script will return $true
+    Otherwise script will return $false
+
+    Example:
+        .\windows_path_enumerate.ps1 -FixUninstall -WhatIf -Passthru -Silent
+    Output:
+        $true
+    Description:
+        $true mean at least 1 service need to be fixed.
+        WhatIf switch mean that nothing was fixed, registry was only diagnosed for the vulnerability
+
 .PARAMETER Help
     Will display this help message
 
@@ -116,11 +133,23 @@ Description
     Script will find and displayed
 
 
+.EXAMPLE
+    # This command will return $true if at least 1 path should be fixed or $false if there nothing to fix
+    # Log will not be available
+    .\windows_path_enumerate.ps1 -FixUninstall -WhatIf -Passthru -Silent -LogName ''
+
+
+VERBOSE:
+--------
+    true
+
+
+
 .NOTES
     Name:  Windows_Path_Enumerate.PS1
-    Version: 3.4
+    Version: 3.5
     Author: Vector BCO
-    Updated: 11 Apr 2020
+    Updated: 3 May 2020
 
 .LINK
     https://github.com/VectorBCO/windows-path-enumerate/
@@ -180,6 +209,14 @@ Param (
     [Alias("ShowOnly")]
         [Switch]$WhatIf,
 
+    [parameter(Mandatory = $False,
+        ParameterSetName = "Fixing")]
+        [Switch]$Passthru,
+
+    [parameter(Mandatory = $False,
+        ParameterSetName = "Fixing")]
+        [Switch]$Silent,
+
     [parameter(Mandatory = $true,
         ParameterSetName = "Help")]
     [Alias("h")]
@@ -217,7 +254,6 @@ Function Fix-ServicePath {
 
     VERBOSE:
     --------
-        2017-02-19 15:43:50Z  :  INFO  :  ComputerName: W8-NB
         2017-02-19 15:43:50Z  :  Old Value :  Service: 'BadDriver' - %ProgramFiles%\bad driver\driver.exe -k -l 'oper'
         2017-02-19 15:43:50Z  :  Expected  :  Service: 'BadDriver' - "%ProgramFiles%\bad driver\driver.exe" -k -l 'oper'
         2017-02-19 15:43:50Z  :  SUCCESS  : New Value of ImagePath was changed for service 'BadDriver'
@@ -237,7 +273,6 @@ Function Fix-ServicePath {
 
     VERBOSE:
     --------
-        2017-02-19 15:43:50Z  :  INFO  :  ComputerName: W8-NB
         2017-02-19 15:43:50Z  :  Old Value :  Service: 'BadDriver' - %ProgramFiles%\bad driver\driver.exe -k -l 'oper'
         2017-02-19 15:43:50Z  :  Expected  :  Service: 'BadDriver' - "C:\Program Files\bad driver\driver.exe" -k -l 'oper'
         2017-02-19 15:43:50Z  :  SUCCESS  : New Value of ImagePath was changed for service 'BadDriver'
@@ -256,7 +291,6 @@ Function Fix-ServicePath {
 
     VERBOSE:
     --------
-        2018-07-02 22:23:02Z  :  INFO  :  ComputerName: test
         2018-07-02 22:23:04Z  :  Old Value : Software : 'FakeSoft32' - c:\Program files (x86)\Fake inc\Pseudo Software\uninstall.exe -silent
         2018-07-02 22:23:04Z  :  Expected  : Software : 'FakeSoft32' - "c:\Program files (x86)\Fake inc\Pseudo Software\uninstall.exe" -silent
 
@@ -268,9 +302,9 @@ Function Fix-ServicePath {
 
     .NOTES
         Name:  Fix-ServicePath
-        Version: 3.4
+        Version: 3.5
         Author: Vector BCO
-        Last Modified: 11 Apr 2020
+        Last Modified: 3 May 2020
 
     .LINK
         https://gallery.technet.microsoft.com/scriptcenter/Windows-Unquoted-Service-190f0341
@@ -284,10 +318,9 @@ Function Fix-ServicePath {
         [Switch]$FixEnv,
         [Switch]$Backup,
         [string]$BackupFolder = "C:\Temp\PathEnumeration",
-        [Switch]$WhatIf
+        [Switch]$WhatIf,
+        [Switch]$Passthru
     )
-
-    Write-Output "$(get-date -format u)  :  INFO  : ComputerName: $($Env:ComputerName)"
 
     # Get all services
     $FixParameters = @()
@@ -306,7 +339,7 @@ Function Fix-ServicePath {
             New-Item $BackupFolder -Force -ItemType Directory | Out-Null
         }
     }
-
+    $PTElements = @()
     ForEach ($FixParameter in $FixParameters) {
         Get-ChildItem $FixParameter.Path -ErrorAction SilentlyContinue | ForEach-Object {
             $SpCharREGEX = '([\[\]])'
@@ -343,6 +376,15 @@ Function Fix-ServicePath {
                                 $soft_service = $(if ($FixParameter.ParamName -Eq 'ImagePath') {'Service'}Else {'Software'})
                                 Write-Output "$(get-date -format u)  :  Old Value : $soft_service : '$($OriginalPath.PSChildName)' - $($OriginalPath.$($FixParameter.ParamName))"
                                 Write-Output "$(get-date -format u)  :  Expected  : $soft_service : '$($OriginalPath.PSChildName)' - $NewValue"
+                                if ($Passthru){
+                                    $PTElements += '' | Select-Object `
+                                        @{n = 'Name'; e = {$OriginalPath.PSChildName}}, `
+                                        @{n = 'Type'; e = {$soft_service}}, `
+                                        @{n = 'ParamName'; e = {$FixParameter.ParamName}}, `
+                                        @{n = 'Path'; e = {$OriginalPSPathOptimized}}, `
+                                        @{n = 'OriginalValue'; e = {$OriginalPath.$($FixParameter.ParamName)}}, `
+                                        @{n = 'ExpectedValue'; e = {$NewValue}}
+                                }
                                 If ($Backup){
                                     $BcpFileName = "$BackupFolder\$soft_service`_$($OriginalPath.PSChildName)`_$(get-date -uFormat "%Y-%m-%d_%H%M%S").reg"
                                     $BcpRegistryPath = $RegistryPath -replace '\:'
@@ -359,7 +401,7 @@ Function Fix-ServicePath {
                                         $DisplayName = $keyTmp.DisplayName
                                     }
                                     If ($keyTmp.$($FixParameter.ParamName) -eq $NewValue) {
-                                        Write-Output "$(get-date -format u)  :  SUCCESS  : Path value was changed for $soft_service '$(if($DisplayName){$DisplayName}else{$OriginalPath.PSChildName})'"
+                                        Write-Output "$(get-date -format u)  :  SUCCESS  : Path value was changed for $soft_service '$($OriginalPath.PSChildName)' $(if($DisplayName){"($DisplayName)"})"
                                     } # End If
                                     Else {
                                         Write-Output "$(get-date -format u)  :  ERROR  : Something is going wrong. Path was not changed for $soft_service '$(if($DisplayName){$DisplayName}else{$OriginalPath.PSChildName})'."
@@ -380,6 +422,9 @@ Function Fix-ServicePath {
             } # End If
         } # End Foreach
     } # End Foreach
+    if ($Passthru){
+        return $PTElements
+    }
 }
 
 Function Get-OSandPoShArchitecture {
@@ -391,6 +436,21 @@ Function Get-OSandPoShArchitecture {
             Return $true, $false
         }
     } else { Return $false, $false }
+}
+
+Function Tee-Log {
+    param(
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+            $Input,
+        [Parameter(Mandatory = $true)]
+            $FilePath,
+        [switch]$Silent
+    )
+    if($Silent){
+        $Input | Out-File -FilePath $LogName -Append
+    } else {
+        $Input | Tee-Object -FilePath $LogName -Append
+    }
 }
 
 if ((! $FixServices) -and (! $FixUninstall)){
@@ -440,8 +500,11 @@ If (! (Test-Path $LogName)){
     }
 }
 
-'*********************************************************************' | Tee-Object -FilePath $LogName -Append
-$validation | Tee-Object -FilePath $LogName -Append
+
+'*********************************************************************' | Tee-Log -FilePath $LogName -Silent:$Passthru
+"$(get-date -format u)  :  INFO  : ComputerName: $($Env:ComputerName)" | Tee-Log -FilePath $LogName -Silent:$Passthru
+$validation | Tee-Log -FilePath $LogName -Silent:$Passthru
+
 if ($RestoreBackup){
     if ($FixServices -and (! $FixUninstall)){
         $RegexPart = "Service"
@@ -454,29 +517,46 @@ if ($RestoreBackup){
     if (Test-Path $BackupFolderPath){
         $FilesToImport = Get-ChildItem "$BackupFolderPath\" | Where-Object {$_.Name -match "$RegexPart`_.+_\d{4}-\d{1,2}-\d{1,2}_\d{3,6}\.reg$"} 
         if ([string]::IsNullOrEmpty($FilesToImport)){
-            Write-Output "$(get-date -format u)  :  No backup files find in $BackupFolderPath" | Tee-Object -FilePath $LogName -Append
+            Write-Output "$(get-date -format u)  :  No backup files find in $BackupFolderPath" | Tee-Log -FilePath $LogName -Silent:$Passthru
         } else {
             Foreach ($FileToImport in $FilesToImport) {
-                Write-Output "$(get-date -format u)  :  Importing '$($FileToImport.Name)' file to the registry" | Tee-Object -FilePath $LogName -Append
+                Write-Output "$(get-date -format u)  :  Importing '$($FileToImport.Name)' file to the registry" | Tee-Log -FilePath $LogName -Silent:$Passthru
                 if ($WhatIf){
-                    Write-Output "$(get-date -format u)  :  Whatif switch selected so nothing changed..." | Tee-Object -FilePath $LogName -Append
+                    Write-Output "$(get-date -format u)  :  Whatif switch selected so nothing changed..." | Tee-Log -FilePath $LogName -Silent:$Passthru
                 } else {
                     REGEDIT /s $($FileToImport.FullName)
                 }
-                #Write-Output "$(get-date -format u)  :  Result : $($ImportResult -split '\r\n' | Where-Object {$_ -NotMatch '^$'})" | Tee-Object -FilePath $LogName -Append 
+                #Write-Output "$(get-date -format u)  :  Result : $($ImportResult -split '\r\n' | Where-Object {$_ -NotMatch '^$'})" | Tee-Log -FilePath $LogName -Silent:$Passthru 
             }
         }
     } else {
-        Write-Output "$(get-date -format u)  :  Backup folder does not exists. Nothing to restore..." | Tee-Object -FilePath $LogName -Append
+        Write-Output "$(get-date -format u)  :  Backup folder does not exists. Nothing to restore..." | Tee-Log -FilePath $LogName -Silent:$Passthru
     }
 } else {
-    Fix-ServicePath `
+    $ScriptExecutionResult = Fix-ServicePath `
         -FixUninstall:$FixUninstall `
         -FixServices:$FixServices `
         -WhatIf:$WhatIf `
         -FixEnv:$FixEnv `
+        -Passthru:$Passthru `
         -Backup:$CreateBackup `
-        -BackupFolder $BackupFolderPath | Tee-Object -FilePath $LogName -Append
+        -BackupFolder $BackupFolderPath 
+
+    if ($Passthru -and (! [string]::IsNullOrEmpty($ScriptExecutionResult))){
+        $Objects = $ScriptExecutionResult | Where {$_.GetType().Name -eq 'PSCustomObject' }
+        $ScriptExecutionResult = $ScriptExecutionResult | Where {$_.GetType().Name -ne 'PSCustomObject' }
+    }
+
+    $ScriptExecutionResult | Tee-Log -FilePath $LogName -Silent:$Passthru
+    If ($Passthru){
+        If ($Silent -and $(( $Objects | Measure-Object ).Count -ge 1)){
+            $True
+        } ElseIf ($Silent){
+            $False
+        } Else {
+            $Objects
+        }
+    }
 }
 
 if ($DeleteLogFile){
