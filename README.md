@@ -18,7 +18,14 @@ For getting full help for latest script could be used Windows_Path_Enumerate.ps1
 ![After Fix](/Content/after_service_fix.png)
 
 # Links
-<table style="width:100%">
+<style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+</style>
+<table>
   <tr>
       <th><a href="https://github.com/VectorBCO/windows-path-enumerate/wiki">Vulnerability description</a></th>
       <th><a href="https://github.com/VectorBCO/windows-path-enumerate/wiki/Version-History">Version history</a></th>
@@ -26,6 +33,3 @@ For getting full help for latest script could be used Windows_Path_Enumerate.ps1
       <th><a href="https://github.com/VectorBCO/windows-path-enumerate/wiki/Links">Links</a></th>
   </tr>
 </table>
-
-| [Vulnerability description](https://github.com/VectorBCO/windows-path-enumerate/wiki) | [Version history](https://github.com/VectorBCO/windows-path-enumerate/wiki/Version-History) | [Help from main script](https://github.com/VectorBCO/windows-path-enumerate/wiki/Help) | [Links](https://github.com/VectorBCO/windows-path-enumerate/wiki/Links) |
-| :--: | :--: | :--: | :--: |
