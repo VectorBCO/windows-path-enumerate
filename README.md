@@ -18,6 +18,8 @@ For getting full help for latest script could be used Windows_Path_Enumerate.ps1
 ![After Fix](/Content/after_service_fix.png)
 
 # Links
+<!DOCTYPE html>
+<html>
 <style>
 table {
   font-family: arial, sans-serif;
@@ -25,6 +27,7 @@ table {
   width: 100%;
 }
 </style>
+<body>
 <table>
   <tr>
       <th><a href="https://github.com/VectorBCO/windows-path-enumerate/wiki">Vulnerability description</a></th>
@@ -33,3 +36,5 @@ table {
       <th><a href="https://github.com/VectorBCO/windows-path-enumerate/wiki/Links">Links</a></th>
   </tr>
 </table>
+</body>
+</html>
