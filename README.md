@@ -19,3 +19,4 @@ For getting full help for latest script could be used Windows_Path_Enumerate.ps1
 
 
 | [Vulnerability description](https://github.com/VectorBCO/windows-path-enumerate/wiki) | [Version history](https://github.com/VectorBCO/windows-path-enumerate/wiki/Version-History) | [Help from main script](https://github.com/VectorBCO/windows-path-enumerate/wiki/Help) | [Links](https://github.com/VectorBCO/windows-path-enumerate/wiki/Links) |
+| :--: | :--: | :--: | :--: |
