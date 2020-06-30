@@ -8,7 +8,10 @@ Function Import-TestRegistryKey {
 }
 
 Function Get-RegexByName {
-    param ([string]$Name)
+    param (
+        [string]$Name,
+        [bool]$FixEnv
+    )
 
     switch ($Name){
 #------------------------------- Service -----------------------------
@@ -22,7 +25,9 @@ Function Get-RegexByName {
         }
         "Test_SrvEnvVar" {
             Write-Host "[Service] 'Test_SrvEnvVar' with ImagePath that contain env variable"
-            $Regex = [regex]::escape('"%SystemDrive%\Path with spaces\SrvEnv_var.exe"')
+            $str = '"%SystemDrive%\Path with spaces\SrvEnv_var.exe"'
+            if ($FixEnv){$str = $str -replace '%SystemDrive%',$Env:SystemDrive}
+            $Regex = [regex]::escape($str)
         }
         "Test_SrvMultiExe"{
             Write-Host "[Service] 'Test_SrvMultiExe' with ImagePath that contain multiple .exe"
@@ -39,11 +44,15 @@ Function Get-RegexByName {
         }
         "Test_APPEnvVar"{
             Write-Host "[Software] 'Test_APPEnvVar' with unquoted Uninstall String with Parameters"
-            $Regex = [regex]::escape('"%SystemDrive%\Path with spaces\APPEnv_var.exe"')
+            $str = '"%SystemDrive%\Path with spaces\APPEnv_var.exe"'
+            if ($FixEnv){$str = $str -replace '%SystemDrive%',$Env:SystemDrive}
+            $Regex = [regex]::escape($str)
         }
         "Test_APPEnvVar_MultiExe"{
             Write-Host "[Software] 'Test_APPEnvVar_MultiExe' with unquoted Uninstall String with Parameters"
-            $Regex = [regex]::escape('"%SystemDrive%\Path with spaces\APPMulti.exe" -uninstall c:\Some Path\Some file.exe')
+            $str = '"%SystemDrive%\Path with spaces\APPMulti.exe" -uninstall c:\Some Path\Some file.exe'
+            if ($FixEnv){$str = $str -replace '%SystemDrive%',$Env:SystemDrive}
+            $Regex = [regex]::escape($str)
         }
         # Test_AppShouldNotBeDetected  "Test application with  Uninstall String that contain multiple .exe"
         default {$Regex = ''}
@@ -55,7 +64,8 @@ Function Get-RegexByName {
 Function Verify-Logs {
     param(
         $LogPath,
-        $Number
+        $Number,
+        [switch]$FixEnv
     )
     # If script was executed successfully this block will analyze it
     if (Test-Path $LogPath){
@@ -75,7 +85,7 @@ Function Verify-Logs {
             if ($string -match 'Expected\s+:\s+(?''Type''(Service|Software))\s+:\s+''(?''Name''[^'']+)''') {
                 $Name = $Matches['Name']
                 $Type = $Matches['Type']
-                $regex = Get-RegexByName -Name $Name
+                $regex = Get-RegexByName -Name $Name -FixEnv $FixEnv
                 if (! [string]::IsNullOrEmpty($regex)) {
                     $TestCases += @{ Name = "$Name" ; Type = "$Type" ; RegExpression = $regex ; LogContent = $LogContent}
                 }
@@ -86,7 +96,7 @@ Function Verify-Logs {
             ($TestCases | Measure-Object).Count | Should -BeGreaterThan 0
         }
 
-        It "[<Type>] <Name> (w\o backup)" -TestCases $TestCases {
+        It "[<Type>][#$Number] <Name>" -TestCases $TestCases {
             Param (
                 $Name,
                 $Type,
@@ -94,8 +104,17 @@ Function Verify-Logs {
                 $LogContent
             )
             $NextShouldBeSuccess = $false
-            $LogContent -split '\r\n' | Foreach-Object {
-                $String = $_ 
+            $BackupFindInALog = $false
+            Foreach ($String in ($LogContent -split '\r\n')) {
+                if ($string -match 'Creating registry backup') {
+                    $BackupFindInALog = $true
+                    # If backups will be created then this line should be skipped from the log
+                    continue
+                } elseif ($BackupFindInALog -and ($string -match 'The operation completed successfully')) {
+                    $BackupFindInALog = $false
+                    # If backups will be created then this line should be skipped from the log
+                    continue
+                }
                 if ($NextShouldBeSuccess) {
                     $NextShouldBeSuccess = $false
                     $string | Should -Match "Success.+'$Name'"
@@ -119,14 +138,14 @@ Describe "Fix-options" {
     }
 
     $LogPath = "$PSScriptRoot\ScriptOutput\Service_Log.txt"
-    It "Script execution (services w\o parameters)" {
+    It "Script execution (services)" {
         . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -LogName $LogPath
         Test-Path $LogPath | should -Be $true
     }
     Verify-Logs -Number 1 -LogPath $LogPath
 
     $LogPath = "$PSScriptRoot\ScriptOutput\Software_Log.txt"
-    It "Script execution (services w\o parameters)" {
+    It "Script execution (software)" {
         . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -FixUninstall -FixServices $False -LogName $LogPath
         Test-Path $LogPath | should -Be $true
     }
@@ -137,4 +156,33 @@ Describe "Fix-options" {
         $OutPut = . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -FixUninstall -WhatIf -Passthru -Silent -LogName $LogPath
         $OutPut | should -Be $false
     }
+
+    Import-TestRegistryKey
+    $LogPath = "$PSScriptRoot\ScriptOutput\SoftwareServicesAndFixEnv.txt"
+    $BackupDir = "$PSScriptRoot\BackupDir"
+    if (! (Test-Path $BackupDir)){
+        New-Item $BackupDir -ItemType Directory
+    }
+    It "Script execution with -FixEnv and create backup parameter (services & software)" {
+        . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -FixUninstall -FixEnv -CreateBackup -BackupFolderPath $BackupDir -LogName $LogPath
+        Test-Path $LogPath | should -Be $true
+        $BackupFiles = Get-ChildItem $BackupDir -File | Select-Object -ExpandProperty Fullname
+        # DBG
+        #Write-Host "Backup files:"
+        #$BackupFiles | Out-Host
+        ($BackupFiles | Measure-Object).Count | Should -BeGreaterOrEqual 8
+    }
+    Verify-Logs -Number 3 -LogPath $LogPath -FixEnv
+
+    <# ! TODO Add backup restore and verification that restore working fine
+        $BackupDir contain 8 backup files:
+        $PSScriptRoot\BackupDir\Service_Test_SrvEnvVar_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Service_Test_SrvMultiExe_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Service_Test_SrvWS_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Service_Test_SrvWSWithParameters_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Software_Test_APPEnvVar_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Software_Test_APPEnvVar_MultiExe_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Software_Test_APPWS_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Software_Test_APPWSWithParameters_2020-06-30_221536.reg
+    #>
 }
