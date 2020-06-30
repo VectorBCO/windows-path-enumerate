@@ -17,5 +17,17 @@ For getting full help for latest script could be used Windows_Path_Enumerate.ps1
    -  After
 ![After Fix](/Content/after_service_fix.png)
 
+<<<<<<< HEAD
 
 | [Vulnerability description](https://github.com/VectorBCO/windows-path-enumerate/wiki) | [Version history](https://github.com/VectorBCO/windows-path-enumerate/wiki/Version-History) | [Help from main script](https://github.com/VectorBCO/windows-path-enumerate/wiki/Help) | [Links](https://github.com/VectorBCO/windows-path-enumerate/wiki/Links) |
+=======
+# Links
+<table>
+  <tr>
+      <th><a href="https://github.com/VectorBCO/windows-path-enumerate/wiki">Vulnerability description</a></th>
+      <th><a href="https://github.com/VectorBCO/windows-path-enumerate/wiki/Version-History">Version history</a></th>
+      <th><a href="https://github.com/VectorBCO/windows-path-enumerate/wiki/Help">Help from main script</a></th>
+      <th><a href="https://github.com/VectorBCO/windows-path-enumerate/wiki/Links">Links</a></th>
+  </tr>
+</table>
+>>>>>>> d5f516dae04fbef773664ec46b665fd908922d31
