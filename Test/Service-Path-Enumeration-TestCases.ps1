@@ -167,9 +167,22 @@ Describe "Fix-options" {
         . $PSScriptRoot\..\Windows_Path_Enumerate.ps1 -FixUninstall -FixEnv -CreateBackup -BackupFolderPath $BackupDir -LogName $LogPath
         Test-Path $LogPath | should -Be $true
         $BackupFiles = Get-ChildItem $BackupDir -File | Select-Object -ExpandProperty Fullname
-        Write-Host "Backup files:"
-        $BackupFiles | Out-Host
+        # DBG
+        #Write-Host "Backup files:"
+        #$BackupFiles | Out-Host
         ($BackupFiles | Measure-Object).Count | Should -BeGreaterOrEqual 8
     }
     Verify-Logs -Number 3 -LogPath $LogPath -FixEnv
+
+    <# ! TODO Add backup restore and verification that restore working fine
+        $BackupDir contain 8 backup files:
+        $PSScriptRoot\BackupDir\Service_Test_SrvEnvVar_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Service_Test_SrvMultiExe_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Service_Test_SrvWS_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Service_Test_SrvWSWithParameters_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Software_Test_APPEnvVar_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Software_Test_APPEnvVar_MultiExe_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Software_Test_APPWS_2020-06-30_221536.reg
+        $PSScriptRoot\BackupDir\Software_Test_APPWSWithParameters_2020-06-30_221536.reg
+    #>
 }
