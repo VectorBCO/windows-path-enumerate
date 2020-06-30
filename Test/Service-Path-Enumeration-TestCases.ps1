@@ -96,7 +96,7 @@ Function Verify-Logs {
             ($TestCases | Measure-Object).Count | Should -BeGreaterThan 0
         }
 
-        It "[<Type>] <Name> (w\o backup)" -TestCases $TestCases {
+        It "[<Type>][#$Number] <Name>" -TestCases $TestCases {
             Param (
                 $Name,
                 $Type,
@@ -104,8 +104,11 @@ Function Verify-Logs {
                 $LogContent
             )
             $NextShouldBeSuccess = $false
-            $LogContent -split '\r\n' | Foreach-Object {
-                $String = $_ 
+            Foreach ($String in ($LogContent -split '\r\n')) {
+                if ($string -match 'Creating registry backup') { 
+                    # If backups will be created then this line should be skipped from the log
+                    continue
+                }
                 if ($NextShouldBeSuccess) {
                     $NextShouldBeSuccess = $false
                     $string | Should -Match "Success.+'$Name'"
@@ -160,7 +163,7 @@ Describe "Fix-options" {
         $BackupFiles = Get-ChildItem $BackupDir -File | Select-Object -ExpandProperty Fullname
         Write-Host "Backup files:"
         $BackupFiles | Out-Host
-        ($BackupFiles | Measure-Object).Count | Should -BeGreaterOrEqual 1
+        ($BackupFiles | Measure-Object).Count | Should -BeGreaterOrEqual 8
     }
     Verify-Logs -Number 3 -LogPath $LogPath -FixEnv
 }
