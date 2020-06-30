@@ -1,11 +1,11 @@
 $ErrorActionPreference = "Stop"
 
-try { Install-Module pester -force -Confirm:$false -Scope CurrentUser -SkipPublisherCheck } Catch {}
+try { Install-Module pester -force -Confirm:$false -Scope CurrentUser -SkipPublisherCheck -RequiredVersion 4.9.0 } Catch {}
 try {
     $ECode = 0
 
     Set-Location $ENV:GITHUB_WORKSPACE\Test\
-    Import-Module Pester -Force -MinimumVersion "4.8.1"
+    Import-Module Pester -Force -MinimumVersion "4.8.0"
 
     $outputfolder = "$PSScriptRoot\PesterOutput\"
     New-Item $outputfolder -Force -ItemType Directory
