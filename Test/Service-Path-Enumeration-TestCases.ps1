@@ -104,8 +104,14 @@ Function Verify-Logs {
                 $LogContent
             )
             $NextShouldBeSuccess = $false
+            $BackupFindInALog = $false
             Foreach ($String in ($LogContent -split '\r\n')) {
-                if ($string -match 'Creating registry backup') { 
+                if ($string -match 'Creating registry backup') {
+                    $BackupFindInALog = $true
+                    # If backups will be created then this line should be skipped from the log
+                    continue
+                } elseif ($BackupFindInALog -and ($string -match 'The operation completed successfully')) {
+                    $BackupFindInALog = $false
                     # If backups will be created then this line should be skipped from the log
                     continue
                 }
