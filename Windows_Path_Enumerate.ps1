@@ -147,9 +147,9 @@ VERBOSE:
 
 .NOTES
     Name:  Windows_Path_Enumerate.PS1
-    Version: 3.5
+    Version: 3.5.1
     Author: Vector BCO
-    Updated: 3 May 2020
+    Updated: 8 April 2021
 
 .LINK
     https://github.com/VectorBCO/windows-path-enumerate/
@@ -200,7 +200,7 @@ Param (
         ParameterSetName = "Fixing")]
     [parameter(Mandatory = $False,
         ParameterSetName = "Restoring")]
-        [string]$LogName = "C:\Temp\ServicesFix-3.4.Log",
+        [string]$LogName = "C:\Temp\ServicesFix-3.5.1.Log",
 
     [parameter(Mandatory = $False,
         ParameterSetName = "Fixing")]
@@ -429,7 +429,7 @@ Function Fix-ServicePath {
 
 Function Get-OSandPoShArchitecture {
     # Check OS architecture
-    if ((Get-CimInstance Win32_OperatingSystem | Select-Object OSArchitecture).OSArchitecture -eq "64-bit") {
+    if ((Get-CimInstance Win32_OperatingSystem | Select-Object OSArchitecture).OSArchitecture -match "64.?bits?") {
         if ([intptr]::Size -eq 8){
             Return $true, $true
         } else {
@@ -543,8 +543,8 @@ if ($RestoreBackup){
         -BackupFolder $BackupFolderPath 
 
     if ($Passthru -and (! [string]::IsNullOrEmpty($ScriptExecutionResult))){
-        $Objects = $ScriptExecutionResult | Where {$_.GetType().Name -eq 'PSCustomObject' }
-        $ScriptExecutionResult = $ScriptExecutionResult | Where {$_.GetType().Name -ne 'PSCustomObject' }
+        $Objects = $ScriptExecutionResult | Where-Object {$_.GetType().Name -eq 'PSCustomObject' }
+        $ScriptExecutionResult = $ScriptExecutionResult | Where-Object {$_.GetType().Name -ne 'PSCustomObject' }
     }
 
     $ScriptExecutionResult | Tee-Log -FilePath $LogName -Silent:$Passthru
