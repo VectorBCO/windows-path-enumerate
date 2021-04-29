@@ -1,31 +1,30 @@
-# This is a basic workflow to help you get started with Actions
+name: Autotests
 
-name: CI
-
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# Controls when the action will run. 
+# Triggers the workflow on push request
+# events but only for the development branch
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
     - cron:  '*/30 5 * * *'
   push:
     branches: [ development ]
-  pull_request:
-    branches: [ development ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
+  # Execute tests on windows server. Test scenario:
+  # - Import reg files with "issues"
+  # - Execute script with few parameter combinations
+  # - Check results 
   Test-Before-Release:
     # The type of runner that the job will run on
     runs-on: windows-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    # Checks-out your repository under $GITHUB_WORKSPACE (job can access it)
     - uses: actions/checkout@v2
 
-    # Runs a set of commands using the runners shell
+    # Execution shell: pwsh (PowerShell 7.x)
     - name: Execute tests
       run: |
         Set-ExecutionPolicy ByPass
