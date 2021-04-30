@@ -9,6 +9,8 @@ on:
     - cron:  '*/30 5 * * *'
   push:
     branches: [ development ]
+  pull_request:
+    branches: [ development ]
 
 jobs:
   # Execute tests on windows server. Test scenario:
