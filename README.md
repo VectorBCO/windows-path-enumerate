@@ -2,9 +2,7 @@
 ![GitHub all releases](https://img.shields.io/github/downloads/VectorBCO/windows-path-enumerate/total)
 
 
-
-Thank you for donation:
-<a href="https://www.patreon.com/bePatron?u=43443071">
+<a href="https://www.patreon.com/bePatron?u=43443071" target="_blank">
    <img alt="Become a Patron!" src="https://img.shields.io/badge/Donate-Parteon-orange?style=for-the-badge&logo=appveyor" >
 </a>
 
