@@ -1,13 +1,10 @@
 ![CI](https://github.com/VectorBCO/windows-path-enumerate/workflows/CI/badge.svg)
 ![GitHub all releases](https://img.shields.io/github/downloads/VectorBCO/windows-path-enumerate/total)
 
-
 <a href="https://www.patreon.com/bePatron?u=43443071" target="_blank">
    <img alt="Become a Patron!" src="https://img.shields.io/badge/Donate-Parteon-orange?style=for-the-badge&logo=appveyor" >
 </a>
 
-
-<img src="https://img.shields.io/badge/Donate-Parteon-orange?style=for-the-badge&logo=appveyor" alt="Become a Patron!" onclick="window.open('https://www.patreon.com/bePatron?u=43443071', '_blank');" />
 
 # Windows-Path-Enumerate
 This script fix vulnerability “Microsoft Windows Unquoted Service Path Enumeration” (Nessus plugin ID 63155) and similar problems with uninstall strings
