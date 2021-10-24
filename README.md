@@ -3,8 +3,7 @@
 
 Thank you for donation:
 
-
-<a href="https://www.patreon.com/bePatron?u=43443071" data-patreon-widget-type="become-patron-button">Become a Patron!</a><script src=''https://c6.patreon.com/becomePatronButton.bundle.js'' type="text/javascript"></script>
+<a href="https://www.patreon.com/bePatron?u=43443071" data-patreon-widget-type="become-patron-button">Become a Patron!</a><script async src="/Content/becomePatronButton.bundle.js"></script>
 
 # Windows-Path-Enumerate
 This script fix vulnerability “Microsoft Windows Unquoted Service Path Enumeration” (Nessus plugin ID 63155) and similar problems with uninstall strings
