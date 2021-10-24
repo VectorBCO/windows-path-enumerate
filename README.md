@@ -7,6 +7,8 @@
 </a>
 
 
+<img src="https://img.shields.io/badge/Donate-Parteon-orange?style=for-the-badge&logo=appveyor" alt="Become a Patron!" onclick="window.open('https://www.patreon.com/bePatron?u=43443071', '_blank');" />
+
 # Windows-Path-Enumerate
 This script fix vulnerability “Microsoft Windows Unquoted Service Path Enumeration” (Nessus plugin ID 63155) and similar problems with uninstall strings
 Script modify values in the next registry keys: 
