@@ -388,9 +388,12 @@ Function Fix-ServicePath {
                                 }
                                 If ($Backup){
                                     $BcpFileName = "$BackupFolder\$soft_service`_$($OriginalPath.PSChildName)`_$(get-date -uFormat "%Y-%m-%d_%H%M%S").reg"
+									$BcpTmpFileName = "$BackupFolder\$soft_service`_$($OriginalPath.PSChildName)`_$(get-date -uFormat "%Y-%m-%d_%H%M%S").tmp"
                                     $BcpRegistryPath = $RegistryPath -replace '\:'
                                     Write-Output "$(get-date -format u)  :  Creating registry backup : $BcpFileName"
-                                    $ExportResult = REG EXPORT $BcpRegistryPath $BcpFileName | Out-String
+                                    $ExportResult = REG EXPORT $BcpRegistryPath $BcpTmpFileName | Out-String
+									more $BcpTmpFileName >> $BcpFileName
+									Remove-Item $BcpTmpFileName -Force -ErrorAction "SilentlyContinue"
                                     Write-Output "$(get-date -format u)  :  Result : $($ExportResult -split '\r\n' | Where-Object {$_ -NotMatch '^$'})"
                                 }
                                 If (! $WhatIf) {
