@@ -392,9 +392,9 @@ Function Fix-ServicePath {
                                     $BcpRegistryPath = $RegistryPath -replace '\:'
                                     Write-Output "$(get-date -format u)  :  Creating registry backup : $BcpFileName"
                                     $ExportResult = REG EXPORT $BcpRegistryPath $BcpTmpFileName | Out-String
-                                    more $BcpTmpFileName >> $BcpFileName
+                                    Get-Content $BcpTmpFileName | Out-File $BcpFileName -Append
                                     Remove-Item $BcpTmpFileName -Force -ErrorAction "SilentlyContinue"
-                                    Write-Output "$(get-date -format u)  :  Result : $($ExportResult -split '\r\n' | Where-Object {$_ -NotMatch '^$'})"
+                                    Write-Output "$(get-date -format u)  :  Backup Result : $($ExportResult -split '\r\n' | Where-Object {$_ -NotMatch '^$'})"
                                 }
                                 If (! $WhatIf) {
                                     Set-ItemProperty -Path $OriginalPSPathOptimized -Name $($FixParameter.ParamName) -Value $NewValue -ErrorAction Stop

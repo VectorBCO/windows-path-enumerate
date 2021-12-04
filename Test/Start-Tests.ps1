@@ -1,21 +1,22 @@
 $ErrorActionPreference = "Stop"
 
-try { Install-Module pester -force -Confirm:$false -Scope CurrentUser -SkipPublisherCheck -RequiredVersion 4.9.0 } Catch {}
+try { 
+    Install-Module pester -force -Confirm:$false -Scope CurrentUser -SkipPublisherCheck
+} Catch {}
 try {
     $ECode = 0
 
     Set-Location $ENV:GITHUB_WORKSPACE\Test\
-    Import-Module Pester -Force -MinimumVersion "4.8.0"
+    Import-Module Pester -Force
 
     $outputfolder = "$PSScriptRoot\PesterOutput\"
     New-Item $outputfolder -Force -ItemType Directory
-    $results = Invoke-Pester -Script "$PSScriptRoot\Service-Path-Enumeration-TestCases.ps1" -OutputFormat NUnitXml `
-                            -OutputFile "$OutputFolder\Services-And-Software-Verification.xml" -PassThru
+    $results = Invoke-Pester  -PassThru -Path  "$PSScriptRoot\Service-Path-Enumeration-TestCases.ps1" -OutputFormat NUnitXml 
 } catch {
-    Write-Host "Something failed during script execution. Error: $_"
+    Write-Host "Something failed during script execution. Error: $_" -ForegroundColor Red
 } Finally {
     if ($results.FailedCount -gt 0) {
-        Write-Host "Tests failed..."
+        Write-Host "Failed tests: $($results.FailedCount)"
         $logs = @(
             "$PSScriptRoot\ScriptOutput\Silent_True_Log.txt",
             "$PSScriptRoot\ScriptOutput\Service_Log.txt",
@@ -24,8 +25,12 @@ try {
             "$PSScriptRoot\ScriptOutput\SoftwareServicesAndFixEnv.txt"
         )
         Foreach ($LogPath in $logs){
-            Write-Host ">>> Log file '$LogPath' content:"
-            Get-Content $LogPath
+            if (Test-Path $LogPath){
+                Write-Host ">>> Log file '$LogPath' content:"
+                Get-Content $LogPath
+            } else {
+                Write-Host ">>> Log File '$LogPath' not found"
+            }
         }
         $ECode = 2
     } elseif ($results.TotalCount -eq 0){
