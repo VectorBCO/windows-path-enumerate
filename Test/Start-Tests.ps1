@@ -11,7 +11,7 @@ try {
 
     $outputfolder = "$PSScriptRoot\PesterOutput\"
     New-Item $outputfolder -Force -ItemType Directory
-    $results = Invoke-Pester  -PassThru -Path  "$PSScriptRoot\Service-Path-Enumeration-TestCases.ps1" 
+    $results = Invoke-Pester  -PassThru -Path  "$PSScriptRoot\Service-Path-Enumeration-TestCases.ps1" -OutputFormat NUnitXml 
 } catch {
     Write-Host "Something failed during script execution. Error: $_" -ForegroundColor Red
 } Finally {
