@@ -450,9 +450,9 @@ Function Tee-Log {
         [switch]$Silent
     )
     if($Silent){
-        $Input | Out-File -FilePath $LogName -Append
+        $Input | Out-File -FilePath $FilePath -Append
     } else {
-        $Input | Tee-Object -FilePath $LogName -Append
+        $Input | Tee-Object -FilePath $FilePath -Append
     }
 }
 
