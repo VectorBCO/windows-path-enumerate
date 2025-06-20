@@ -378,13 +378,14 @@ Function Fix-ServicePath {
                                 Write-Output "$(get-date -format u)  :  Old Value : $soft_service : '$($OriginalPath.PSChildName)' - $($OriginalPath.$($FixParameter.ParamName))"
                                 Write-Output "$(get-date -format u)  :  Expected  : $soft_service : '$($OriginalPath.PSChildName)' - $NewValue"
                                 if ($Passthru){
-                                    $PTElements += '' | Select-Object `
-                                        @{n = 'Name'; e = {$OriginalPath.PSChildName}}, `
-                                        @{n = 'Type'; e = {$soft_service}}, `
-                                        @{n = 'ParamName'; e = {$FixParameter.ParamName}}, `
-                                        @{n = 'Path'; e = {$OriginalPSPathOptimized}}, `
-                                        @{n = 'OriginalValue'; e = {$OriginalPath.$($FixParameter.ParamName)}}, `
-                                        @{n = 'ExpectedValue'; e = {$NewValue}}
+                                    $PTElements += [PSCustomObject]@{
+                                        Name          = $OriginalPath.PSChildName
+                                        Type          = $soft_service
+                                        ParamName     = $FixParameter.ParamName
+                                        Path          = $OriginalPSPathOptimized
+                                        OriginalValue = $OriginalPath.$($FixParameter.ParamName)
+                                        ExpectedValue = $NewValue
+                                    }
                                 }
                                 If ($Backup){
                                     $BcpFileName = "$BackupFolder\$soft_service`_$($OriginalPath.PSChildName)`_$(get-date -uFormat "%Y-%m-%d_%H%M%S").reg"
