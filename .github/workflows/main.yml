@@ -11,13 +11,22 @@ on:
     branches: [ development ]
   pull_request:
     branches: [ development ]
+  # Allow manual execution of tests on a specific branch
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run tests on'
+        required: true
+        default: 'development'
 
 jobs:
   # Execute tests on windows server. Test scenario:
   # - Import reg files with "issues"
   # - Execute script with few parameter combinations
-  # - Check results 
+  # - Check results
   Test-Before-Release:
+    # Allow manual runs only for repository owner
+    if: ${{ github.event_name != 'workflow_dispatch' || github.actor == 'VectorBCO' }}
     # The type of runner that the job will run on
     runs-on: windows-latest
 
@@ -25,6 +34,8 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE (job can access it)
     - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
 
     # Execution shell: pwsh (PowerShell 7.x)
     - name: Execute tests
